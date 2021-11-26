@@ -68,7 +68,7 @@ class StockPriceHistoryDb:
     def save_dailiy_data(self, stock_price_list: list):
         prepared_sql = """
         insert into stock_price_history(stock_id, start_price, end_price, highest_price, lowest_price, volume, note_date, create_time) 
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) on duplicate key update start_price=values(start_price),end_price=values(end_price),highest_price=values(highest_price),
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s) on duplicate key update start_price=values(start_price),end_price=values(end_price),highest_price=values(highest_price),
             lowest_price=values(lowest_price),volume=values(volume),create_time=values(create_time)
         """
 

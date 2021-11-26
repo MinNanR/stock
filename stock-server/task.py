@@ -8,7 +8,7 @@ import json
 import threading
 import time
 
-from server2.entity import StockPriceHistory
+from entity import StockPriceHistory
 
 
 def init_data_to_process(date_str: str):
@@ -34,18 +34,14 @@ def init_data_to_process(date_str: str):
 
 
 def do_get_today_price(stock_list: list, date_str: str):
-
-    threading_name = threading.current_thread().getName()
     history_list = []
     for stock in stock_list:
         stock_code = stock.stockNickCode
-        print("{0} : begin to work, target stock code = {1}".format(
-            threading_name, stock.stockNickCode))
         history = handle_single_stock(stock_code, date_str)
-        print("{0} : success to save history data, sotck code = {1}".format(
-            threading_name, stock_code))
-        history_list.append(history)
-    stock_price_history_db.insert_batch(history_list)
+        if history != None:
+            history_list.append(history)
+    stock_price_history_db.save_dailiy_data(history_list)
+
 
 def handle_single_stock(stock_code: str, date_str: str):
     url = "https://api.doctorxiong.club/v1/stock/kline/day?token=LJUjbTGJeO&code={0}&startDate={1}&endDate={2}&type=1"
@@ -53,7 +49,7 @@ def handle_single_stock(stock_code: str, date_str: str):
     response = requests.get(full_url)
     response_json = response.json()
     if(response_json["code"] != 200):
-        return
+        return None
 
     item = response_json["data"][0]
     history = StockPriceHistory()
