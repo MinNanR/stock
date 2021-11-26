@@ -1,0 +1,20 @@
+POST http://localhost:8001/?name=minnan&password=123
+Content-Type: application/json
+Authorization: Bear aaaa
+
+{
+    "name":"asdfasf"
+}alter table stock_price_history add end_price_last decimal(10,4) null comment '上一个交易日收盘价' after avg_price_past_120_days;
+
+
+###
+GET https://api.doctorxiong.club/v1/stock/kline/day?token=LJUjbTGJeO&code=sh600000&startDate=2021-01-01&type=1
+
+###
+POST http://localhost:8150/stock/getEligibleStockList
+Content-Type: application/json
+Accept: application/json
+
+{
+    "noteDate":"2021-11-25",
+}
