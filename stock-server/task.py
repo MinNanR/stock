@@ -8,7 +8,7 @@ import json
 import threading
 import time
 
-from entity import StockPriceHistory
+from entity import ResponseEntity, StockPriceHistory
 
 
 def init_data_to_process(date_str: str):
@@ -19,49 +19,79 @@ def init_data_to_process(date_str: str):
         # m = {"id": stock.id, "stock_nick_code": stock.stockNickCode}
         # json_string = json.dumps(m)
         # redis_connection.rpush("stock_list" + date_str, json_string)
+        # t = threading.Thread(target=do_get_today_price,
+        #                      args=(stock_list, date_str))
+        do_get_today_price(stock_list, date_str)
         t = threading.Thread(target=do_get_today_price,
                              args=(stock_list, date_str))
         thread_list.append(t)
-        t.start()
+        start += 1000
+        # thread_list.append(t)
+        # t.start()
 
-        start = start+1000
+        # start = start+2000
         if(len(stock_list) < 1000):
             break
 
     # redis_connection.delete("finished")
-    for t in thread_list:
-        t.join()
+    t_threading_list = [thread_list[i:i+3]
+                        for i in range(0, len(thread_list), 3)]
+    for l in t_threading_list:
+        for t in l:
+            t.start()
+        for t in l:
+            t.join()
 
 
 def do_get_today_price(stock_list: list, date_str: str):
     history_list = []
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     for stock in stock_list:
         stock_code = stock.stockNickCode
         history = handle_single_stock(stock_code, date_str)
         if history != None:
+            history.set_stock_id(stock.id)
+            history.set_create_time(now)
             history_list.append(history)
     stock_price_history_db.save_dailiy_data(history_list)
 
 
 def handle_single_stock(stock_code: str, date_str: str):
-    url = "https://api.doctorxiong.club/v1/stock/kline/day?token=LJUjbTGJeO&code={0}&startDate={1}&endDate={2}&type=1"
-    full_url = url.format(stock_code, date_str, date_str)
-    response = requests.get(full_url)
-    response_json = response.json()
-    if(response_json["code"] != 200):
-        return None
+    try:
+        url = "https://api.doctorxiong.club/v1/stock/kline/day?token=LJUjbTGJeO&code={0}&startDate={1}&endDate={2}&type=1"
+        full_url = url.format(stock_code, date_str, date_str)
+        response = requests.get(full_url)
+        response_json = response.json()
+        print(response_json)
+        if(response_json["code"] != 200 or response_json["data"] == None):
+            return None
+        if(len(response_json["data"]) == 0):
+            return None
 
-    item = response_json["data"][0]
-    history = StockPriceHistory()
-    history.set_start_price(item[1])
-    history.set_end_price(item[2])
-    history.set_highest_price(item[3])
-    history.set_lowest_price(item[4])
-    history.set_volume(int(item[5].split(".")[0]))
-    history.set_note_date(item[0])
-    return history
+        item = response_json["data"][0]
+        history = StockPriceHistory()
+        history.set_start_price(item[1])
+        history.set_end_price(item[2])
+        history.set_highest_price(item[3])
+        history.set_lowest_price(item[4])
+        history.set_volume(int(item[5].split(".")[0]))
+        history.set_note_date(item[0])
+        return history
+    except Exception as e:
+        return None
 
 
 def get_today_price():
-    date_str = datetime.now().strftime("%Y-%m-%d")
+    # date_str = datetime.now().strftime("%Y-%m-%d")
+    date_str = "2021-11-26"
     init_data_to_process(date_str)
+
+
+if __name__ == "__main__":
+    get_today_price()
+    # history = handle_single_stock("sh600000", "2021-11-26")
+    # s = ResponseEntity.serialize(history)
+    # history.set_stock_id(1)
+    # now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    # history.set_create_time(now)
+    # stock_price_history_db.save_dailiy_data([history])

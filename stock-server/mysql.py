@@ -27,7 +27,9 @@ class StockDb:
 
     def get_stock_list(self, start: int):
         prepared_sql = """
-        select id, stock_nick_code from stock_info limit {0},{1}
+        select id, stock_nick_code from stock_info 
+        where id not in (select stock_id from stock_price_history where note_date ='2021-11-26')
+        limit {0},{1}
         """
 
         result_list = []
