@@ -85,20 +85,19 @@ class StockPriceHistoryDb:
         lock.release()
         print("success to save history ,%d row affected" % insert_count)
         
-    def get_eliablge_stock_list(self, note_date: str, start: int, page_size: int):
+    def get_eliablge_stock_list(self, note_date: str):
         prepared_sql = """
         select t1.id, t2.id, t2.stock_name, t2.stock_code, t1.start_price, t1.end_price, t1.highest_price, t1.lowest_price,
             t1.avg_price_past_120_days, t1.create_time
         from stock_price_history t1
                 left join stock_info t2 on t1.stock_id = t2.id
         where t1.note_date = %s and (t1.end_price > t1.avg_price_past_120_days and t1.end_price_last < t1.avg_price_past_120_days_last)
-        limit %s,%s
         """
 
         lock.acquire()
         data_list = []
         with conn.cursor() as cursor:
-            cursor.execute(prepared_sql, (note_date, start, page_size))
+            cursor.execute(prepared_sql, (note_date,))
             result_list = cursor.fetchall()
             print(len(result_list))
             for result_line in result_list:

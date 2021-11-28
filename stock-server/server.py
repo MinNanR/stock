@@ -1,8 +1,6 @@
 from flask import Flask, request
-import redis
 from werkzeug.wrappers import response
 from entity import *
-import json
 from flask_apscheduler import APScheduler
 from datetime import datetime
 from redis_connection import redis_connection
@@ -42,12 +40,12 @@ def hello_world():
 @app.route("/stock/getEligibleStockList", methods=["POST"])
 def get_eligible_stock_list():
     note_date = request.json["noteDate"]
-    page_index = int(request.json["pageIndex"])
-    page_size = int(request.json["pageSize"])
+    # page_index = int(request.json["pageIndex"])
+    # page_size = int(request.json["pageSize"])
     print(note_date)
     total_count = stock_price_history_db.count_eliablge_stock_list(note_date)
     stock_list = stock_price_history_db.get_eliablge_stock_list(
-        note_date, get_start(page_index, page_size), page_size) if total_count > 0 else []
+        note_date) if total_count > 0 else []
     print(total_count)
     data = {
         "totalCount": total_count,

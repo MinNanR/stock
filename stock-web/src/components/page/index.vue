@@ -59,8 +59,8 @@ export default {
       queryForm: {
         // keyword: "",
         noteDate: "",
-        pageIndex: 1,
-        pageSize: 10,
+        // pageIndex: 1,
+        // pageSize: 10,
       },
     };
   },

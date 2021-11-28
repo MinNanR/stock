@@ -1,0 +1,1 @@
+pip install Flask flask-cors PyMySQL redis flask_apscheduler numpy
