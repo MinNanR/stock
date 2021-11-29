@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div style="margin-bottom: 30px">
     <el-form :inline="true" :model="queryForm" class="demo-form-inline">
       <el-form-item label="统计日期">
         <el-date-picker
@@ -35,6 +35,22 @@
         <el-button type="primary">查看</el-button>
       </el-table-column>
     </el-table>
+    <div style="display: flex; margin-top: 30px">
+      <!-- <div class="refresh-btn" @click="getTenantList()">
+        <i class="el-icon-refresh-right"></i>
+      </div> -->
+      <el-pagination
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+        :current-page="queryForm.pageIndex"
+        :page-sizes="[10, 20, 50, 100]"
+        :page-size="10"
+        :hide-on-single-page="false"
+        layout="total, sizes, prev, pager, next, jumper"
+        :total="total"
+      >
+      </el-pagination>
+    </div>
   </div>
 </template>
 
@@ -59,9 +75,10 @@ export default {
       queryForm: {
         // keyword: "",
         noteDate: "",
-        // pageIndex: 1,
-        // pageSize: 10,
+        pageIndex: 1,
+        pageSize: 10,
       },
+      total: 0,
     };
   },
   methods: {
@@ -69,9 +86,18 @@ export default {
       this.request
         .post("/stock/getEligibleStockList", this.queryForm)
         .then((response) => {
-          let data = response.data
-          this.tableData = data["stockList"]
+          let data = response.data;
+          this.tableData = data["stockList"];
+          this.total = data["totalCount"]
         });
+    },
+    handleSizeChange(val) {
+      this.queryForm.pageSize = val;
+      this.querySotckList(1);
+    },
+    handleCurrentChange(val) {
+      this.queryForm.pageIndex = val
+      this.querySotckList(val);
     },
   },
   mounted() {

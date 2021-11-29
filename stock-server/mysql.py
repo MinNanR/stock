@@ -2,14 +2,19 @@ import numpy as np
 import pymysql
 import threading
 from entity import StockInfo, StockPriceHistory
+from dbutils.pooled_db import PooledDB
 
-conn = pymysql.connect(host="minnan.site", port=3306,
-                       user="Minnan", passwd="minnan", db="stock")
+
+# conn = pymysql.connect(host="minnan.site", port=3306,
+#                        user="Minnan", passwd="minnan", db="stock")
+pool = PooledDB(creator=pymysql, mincached=5, host="minnan.site",
+                user="Minnan", passwd="minnan", db="stock", charset="utf8")
 lock = threading.Lock()
 
 
 class StockDb:
     def inset_stock_batch(self, stock_list: list):
+
         prepared_sql = """
         insert into stock_info(stock_name, stock_nick_code, stock_code, detected) VALUES (%s, %s, %s, %s)
         """
@@ -19,6 +24,7 @@ class StockDb:
             data.append((stock.stockName, stock.stockNickCode,
                         stock.stockCode, stock.detected))
 
+        conn = pool.connection(shareable=False)
         with conn.cursor() as cursor:
             insert_count = cursor.executemany(prepared_sql, data)
 
@@ -33,7 +39,8 @@ class StockDb:
         """
 
         result_list = []
-        lock.acquire()
+        # lock.acquire()
+        conn = pool.connection(shareable=False)
         with conn.cursor() as cursor:
             sql = prepared_sql.format(start, 1000)
             cursor.execute(sql)
@@ -42,7 +49,7 @@ class StockDb:
                 stock = StockInfo(
                     id=result_line[0], stock_name=None, stock_nick_code=result_line[1], stock_code=None, detected=None)
                 result_list.append(stock)
-        lock.release()
+        # lock.release()
 
         return result_list
 
@@ -60,11 +67,12 @@ class StockPriceHistoryDb:
                  item.volume, item.avgPricePast120Days, item.endPriceLast, item.avgPricePast120DaysLast, item.noteDate, item.createTime)
                 for item in stock_price_list]
 
-        lock.acquire()
+        conn = pool.connection(shareable=False)
+        # lock.acquire()
         with conn.cursor() as cursor:
             insert_count = cursor.executemany(prepared_sql, data)
         conn.commit()
-        lock.release()
+        # lock.release()
         print("success to save history ,%d row affected" % insert_count)
 
     def save_dailiy_data(self, stock_price_list: list):
@@ -78,26 +86,29 @@ class StockPriceHistoryDb:
                  item.volume, item.noteDate, item.createTime)
                 for item in stock_price_list]
 
-        lock.acquire()
+        conn = pool.connection(shareable=False)
+        # lock.acquire()
         with conn.cursor() as cursor:
             insert_count = cursor.executemany(prepared_sql, data)
         conn.commit()
-        lock.release()
+        # lock.release()
         print("success to save history ,%d row affected" % insert_count)
-        
-    def get_eliablge_stock_list(self, note_date: str):
+
+    def get_eliablge_stock_list(self, note_date: str, start: int, page_size: int):
         prepared_sql = """
         select t1.id, t2.id, t2.stock_name, t2.stock_code, t1.start_price, t1.end_price, t1.highest_price, t1.lowest_price,
             t1.avg_price_past_120_days, t1.create_time
         from stock_price_history t1
                 left join stock_info t2 on t1.stock_id = t2.id
         where t1.note_date = %s and (t1.end_price > t1.avg_price_past_120_days and t1.end_price_last < t1.avg_price_past_120_days_last)
+        limit %s,%s
         """
 
-        lock.acquire()
+        # lock.acquire()
+        conn = pool.connection(shareable=False)
         data_list = []
         with conn.cursor() as cursor:
-            cursor.execute(prepared_sql, (note_date,))
+            cursor.execute(prepared_sql, (note_date, start, page_size))
             result_list = cursor.fetchall()
             print(len(result_list))
             for result_line in result_list:
@@ -114,7 +125,7 @@ class StockPriceHistoryDb:
                 history.set_create_time(
                     result_line[9].strftime("%Y-%m-%d %H:%M:%S"))
                 data_list.append(history)
-        lock.release()
+        # lock.release()
         return data_list
 
     def count_eliablge_stock_list(self, note_date: str):
@@ -125,13 +136,22 @@ class StockPriceHistoryDb:
         and (t1.end_price > t1.avg_price_past_120_days and t1.end_price_last < t1.avg_price_past_120_days_last)
         """
 
-        lock.acquire()
+        conn = pool.connection(shareable=False)
+        # lock.acquire()
         count = 0
         with conn.cursor() as cursor:
             cursor.execute(prepared_sql, (note_date,))
             count = cursor.fetchone()[0]
-        lock.release()
+        # lock.release()
         return int(count)
+
+    def call_procedure_calculate_avg_price(self, note_date: str):
+        sql = "calculate_avg_price('{0}')".format(note_date)
+        # lock.acquire()
+        conn = pool.connection(shareable=False)
+        with conn.cursor() as cursor:
+            cursor.execute(sql)
+        # lock.release()
 
 
 stock_db = StockDb()
