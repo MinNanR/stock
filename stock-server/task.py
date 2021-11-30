@@ -16,24 +16,14 @@ def init_data_to_process(date_str: str):
     thread_list = []
     while(True):
         stock_list = stock_db.get_stock_list(start)
-        # m = {"id": stock.id, "stock_nick_code": stock.stockNickCode}
-        # json_string = json.dumps(m)
-        # redis_connection.rpush("stock_list" + date_str, json_string)
-        # t = threading.Thread(target=do_get_today_price,
-        #                      args=(stock_list, date_str))
-        do_get_today_price(stock_list, date_str)
+        print("fetch data {0} row".format(len(stock_list)))
         t = threading.Thread(target=do_get_today_price,
                              args=(stock_list, date_str))
         thread_list.append(t)
         start += 1000
-        # thread_list.append(t)
-        # t.start()
-
-        # start = start+2000
         if(len(stock_list) < 1000):
             break
 
-    # redis_connection.delete("finished")
     t_threading_list = [thread_list[i:i+3]
                         for i in range(0, len(thread_list), 3)]
     for l in t_threading_list:
@@ -41,6 +31,8 @@ def init_data_to_process(date_str: str):
             t.start()
         for t in l:
             t.join()
+
+    stock_price_history_db.call_procedure_calculate_avg_price(date_str)
 
 
 def do_get_today_price(stock_list: list, date_str: str):
@@ -78,12 +70,12 @@ def handle_single_stock(stock_code: str, date_str: str):
         history.set_note_date(item[0])
         return history
     except Exception as e:
+        print(e)
         return None
 
 
 def get_today_price():
-    # date_str = datetime.now().strftime("%Y-%m-%d")
-    date_str = "2021-11-26"
+    date_str = datetime.now().strftime("%Y-%m-%d")
     init_data_to_process(date_str)
 
 

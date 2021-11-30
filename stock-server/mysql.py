@@ -29,12 +29,13 @@ class StockDb:
             insert_count = cursor.executemany(prepared_sql, data)
 
         conn.commit()
+        conn.close()
         print("success to insert ,%d row affected" % insert_count)
 
     def get_stock_list(self, start: int):
         prepared_sql = """
         select id, stock_nick_code from stock_info 
-        where id not in (select stock_id from stock_price_history where note_date ='2021-11-26')
+        where detected = 1
         limit {0},{1}
         """
 
@@ -50,7 +51,7 @@ class StockDb:
                     id=result_line[0], stock_name=None, stock_nick_code=result_line[1], stock_code=None, detected=None)
                 result_list.append(stock)
         # lock.release()
-
+        conn.close()
         return result_list
 
 
@@ -73,6 +74,7 @@ class StockPriceHistoryDb:
             insert_count = cursor.executemany(prepared_sql, data)
         conn.commit()
         # lock.release()
+        conn.close()
         print("success to save history ,%d row affected" % insert_count)
 
     def save_dailiy_data(self, stock_price_list: list):
@@ -92,7 +94,8 @@ class StockPriceHistoryDb:
             insert_count = cursor.executemany(prepared_sql, data)
         conn.commit()
         # lock.release()
-        print("success to save history ,%d row affected" % insert_count)
+        conn.close()
+        print("success to save history ,{0} row affected".format(insert_count))
 
     def get_eliablge_stock_list(self, note_date: str, start: int, page_size: int):
         prepared_sql = """
@@ -110,7 +113,6 @@ class StockPriceHistoryDb:
         with conn.cursor() as cursor:
             cursor.execute(prepared_sql, (note_date, start, page_size))
             result_list = cursor.fetchall()
-            print(len(result_list))
             for result_line in result_list:
                 history = StockPriceHistory()
                 history.set_id(int(result_line[0]))
@@ -126,6 +128,7 @@ class StockPriceHistoryDb:
                     result_line[9].strftime("%Y-%m-%d %H:%M:%S"))
                 data_list.append(history)
         # lock.release()
+        conn.close()
         return data_list
 
     def count_eliablge_stock_list(self, note_date: str):
@@ -143,15 +146,18 @@ class StockPriceHistoryDb:
             cursor.execute(prepared_sql, (note_date,))
             count = cursor.fetchone()[0]
         # lock.release()
+        conn.close()
         return int(count)
 
     def call_procedure_calculate_avg_price(self, note_date: str):
-        sql = "calculate_avg_price('{0}')".format(note_date)
+        sql = "call calculate_avg_price('{0}')".format(note_date)
         # lock.acquire()
         conn = pool.connection(shareable=False)
         with conn.cursor() as cursor:
             cursor.execute(sql)
         # lock.release()
+        conn.commit()
+        conn.close()
 
 
 stock_db = StockDb()

@@ -1,1 +1,1 @@
-pip install Flask flask-cors PyMySQL redis flask_apscheduler numpy
+pip install requests Flask flask-cors PyMySQL redis flask_apscheduler numpy DBUtils

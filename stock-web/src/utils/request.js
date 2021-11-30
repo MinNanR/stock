@@ -34,7 +34,7 @@ request.interceptors.response.use(
             let data = response.data
             if (data.code === '000') {
                 if (response.headers['newtoken'] != null) {
-                    localStorage.setItem("rental-token", `Bearer ${response.headers.newtoken}`);
+                    localStorage.setItem("stock-token", `Bearer ${response.headers.newtoken}`);
                 }
                 return { data: data.data, message: data.message }
             } else {

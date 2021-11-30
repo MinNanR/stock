@@ -61,16 +61,6 @@ export default {
   data() {
     return {
       tableData: [
-        {
-          stockName: "龙建股份",
-          stockCode: "600853",
-          endPrice: "2.4900",
-        },
-        {
-          stockName: "天邦股份",
-          stockCode: "002124",
-          endPrice: "6.4100",
-        },
       ],
       queryForm: {
         // keyword: "",
