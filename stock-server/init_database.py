@@ -2,11 +2,12 @@ from pymysql import thread_safe
 from mysql import *
 from redis_connection import redis_connection
 import requests
-from entity import *
 from threading import Thread
 import time
 import datetime
 import numpy as np
+from entity import StockInfo
+from sqlalchemy.orm import sessionmaker
 
 
 # 初始化股票列表
@@ -117,34 +118,3 @@ def calculate(lock: threading.Lock):
         stock_info = json.loads(redis_data)
         stock_id = int(stock_info["id"])
         stock_price_history_db.calculate(stock_id, lock)
-
-
-def recover_redis():
-    s1 = {"id": 1, "stock_nick_code": "sh600000"}
-    s2 = {"id": 2, "stock_nick_code": "sh600001"}
-    s3 = {"id": 3, "stock_nick_code": "sh600002"}
-    s4 = {"id": 4, "stock_nick_code": "sh600003"}
-    redis_connection.lpush("stock_list", json.dumps(s4))
-    redis_connection.lpush("stock_list", json.dumps(s3))
-    redis_connection.lpush("stock_list", json.dumps(s2))
-    redis_connection.lpush("stock_list", json.dumps(s1))
-
-
-if __name__ == "__main__":
-    # redis_connection.set("finished", 1)
-    # init_data_to_process()
-    lock = threading.Lock()
-    # stock_price_history_db.calculate(1, lock)
-    # handle_single_stock({"id": "1", "stock_nick_code": "sh600000"}, lock)
-    t1 = Thread(target=init_stock_price_history, args=("Thread1", lock,))
-    t2 = Thread(target=init_stock_price_history, args=("Thread2",lock,))
-    t3 = Thread(target=init_stock_price_history, args=("Trread3",lock,))
-
-    # recover_redis()
-    t1.start()
-    t2.start()
-    t3.start()
-
-    t1.join()
-    t2.join()
-    t3.join()

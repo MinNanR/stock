@@ -1,11 +1,12 @@
-from flask import Flask, request,jsonify
+from flask import Flask, request, jsonify
 from werkzeug.wrappers import response
-from entity import *
+from response_entity import *
 from flask_apscheduler import APScheduler
 from datetime import datetime
 from redis_connection import redis_connection
 from flask_cors import CORS
-from mysql import stock_db, stock_price_history_db
+from mysql import stock_db, stock_price_history_db, init_db
+import entity
 
 app = Flask(__name__)
 CORS(app, resources=r"/*")
@@ -27,11 +28,6 @@ def daily_task():
     now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     print(now)
 
-@app.before_request
-def before_request():
-    authorization = request.headers["authorization"]
-    print(authorization)
-    return None
 
 @app.route('/', methods=['POST'])
 def hello_world():
@@ -47,15 +43,49 @@ def get_eligible_stock_list():
     note_date = request.json["noteDate"]
     page_index = int(request.json["pageIndex"])
     page_size = int(request.json["pageSize"])
+    result = stock_price_history_db.get_eliablge_stock_list(
+        note_date, get_start(page_index, page_size), page_size)
     total_count = stock_price_history_db.count_eliablge_stock_list(note_date)
     stock_list = stock_price_history_db.get_eliablge_stock_list(
         note_date, get_start(page_index,page_size), page_size) if total_count > 0 else []
+    
+    data = [
+        {
+            "id":int(item[0].id),
+            "sotckId": int(item[0].stock_id),
+            "stockName": str(item.stock_name),
+            "stockCode":str(item.stock_code),
+            "startPrice":str(item[0].start_price),
+            "endPrice":str(item[0].end_price),
+            "highestPrice":str(item[0].highest_price),
+            "lowestPrice":str(item[0].lowest_price),
+            "avgPricePast120Days":str(item[0].avg_price_past_120_days),
+            "createTime":str(item[0].create_time)
+        } for item in stock_list
+    ]
     data = {
         "totalCount": total_count,
-        "stockList": stock_list
+        "stockList": data
     }
     response_entity = ResponseEntity.success(
         "暂无数据" if len(stock_list) == 0 else None, data)
+    return response_entity.serialize()
+
+
+@app.route("/testSqlalchemy", methods=["POST"])
+def test_sqlalchemy():
+    q = entity.test()
+    return jsonify(q), 200
+
+
+@app.route("/getStockList", methods=["POST"])
+def get_stock_list():
+    results = stock_db.get_stock_list(0)
+    result = [{
+        "id": int(item.id),
+        "stockNickCode": str(item.stock_nick_code)
+    } for item in results]
+    response_entity = ResponseEntity.success(result)
     return response_entity.serialize()
 
 
@@ -69,4 +99,5 @@ if __name__ == '__main__':
     # scheduler = APScheduler()
     # scheduler.init_app(app)
     # scheduler.start()
+    init_db()
     app.run(port=8150, debug=True)
