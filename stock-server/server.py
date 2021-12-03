@@ -1,12 +1,13 @@
+# from redis_connection import init_redis
 from flask import Flask, request, jsonify
-from werkzeug.wrappers import response
+from werkzeug.security import generate_password_hash,check_password_hash
 from response_entity import *
 from flask_apscheduler import APScheduler
 from datetime import datetime
-from redis_connection import redis_connection
 from flask_cors import CORS
 from mysql import stock_db, stock_price_history_db, init_db
 import entity
+from config import jwt_config
 
 app = Flask(__name__)
 CORS(app, resources=r"/*")
@@ -31,10 +32,7 @@ def daily_task():
 
 @app.route('/', methods=['POST'])
 def hello_world():
-    user = UserVO(1, "min")
-    vo = ListQueryVO([user], 3)
-    response_entity = ResponseEntity.success(message=None, data=vo)
-    print("processing")
+    response_entity = ResponseEntity.success()
     return response_entity.serialize()
 
 
@@ -49,8 +47,7 @@ def get_eligible_stock_list():
     stock_list = stock_price_history_db.get_eliablge_stock_list(
         note_date, get_start(page_index,page_size), page_size) if total_count > 0 else []
     
-    data = [
-        {
+    stocks = [{
             "id":int(item[0].id),
             "sotckId": int(item[0].stock_id),
             "stockName": str(item.stock_name),
@@ -61,11 +58,10 @@ def get_eligible_stock_list():
             "lowestPrice":str(item[0].lowest_price),
             "avgPricePast120Days":str(item[0].avg_price_past_120_days),
             "createTime":str(item[0].create_time)
-        } for item in stock_list
-    ]
+        } for item in stock_list]
     data = {
         "totalCount": total_count,
-        "stockList": data
+        "stockList": stocks
     }
     response_entity = ResponseEntity.success(
         "暂无数据" if len(stock_list) == 0 else None, data)
@@ -89,6 +85,8 @@ def get_stock_list():
     return response_entity.serialize()
 
 
+
+
 def get_start(page_index: int, page_size: int):
     return (page_index - 1) * page_size
 
@@ -100,4 +98,8 @@ if __name__ == '__main__':
     # scheduler.init_app(app)
     # scheduler.start()
     init_db()
+    # init_redis()
     app.run(port=8150, debug=True)
+    # h = generate_password_hash("minnan35")
+    # print(check_password_hash(h, "adsf"))
+    # print(generate_password_hash("minnan35"))

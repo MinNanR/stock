@@ -1,9 +1,10 @@
 from datetime import date
 import re
 import numpy as np
-from sqlalchemy import engine, create_engine, desc,func
+from sqlalchemy import engine, create_engine, desc, func
 from sqlalchemy.orm.session import Session, sessionmaker
 from sqlalchemy.dialects.mysql import insert
+from config import datasource
 
 from entity import StockInfo, StockPriceHistory
 
@@ -13,8 +14,14 @@ Session
 
 def init_db():
     global engine, Session
-    engine = create_engine(
-        "mysql+pymysql://Minnan:minnan@minnan.site:3306/stock", echo=True)
+    host = datasource["host"]
+    port = datasource["port"]
+    user = datasource["user"]
+    password = datasource["password"]
+    schema = datasource["schema"]
+    url = "mysql+pymysql://{0}:{1}@{2}:{3}/{4}".format(
+        user, password, host, port, schema)
+    engine = create_engine(url, echo=True)
     Session = sessionmaker(bind=engine)
 
 
@@ -92,9 +99,9 @@ class StockPriceHistoryDb:
 
     def count_eliablge_stock_list(self, note_date: str):
         session = Session()
-        count = session.query(func.count(StockPriceHistory.id)).filter(StockPriceHistory.note_date == note_date).scalar()
+        count = session.query(func.count(StockPriceHistory.id)).filter(
+            StockPriceHistory.note_date == note_date).scalar()
         return count
-
 
     def call_procedure_calculate_avg_price(self, note_date: str):
         sql = "call calculate_avg_price('{0}')".format(note_date)
