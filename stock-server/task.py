@@ -3,7 +3,7 @@ import requests
 
 from requests.api import request
 from mysql import stock_db, stock_price_history_db, init_db
-from redis_connection import redis_connection
+from redis_connection import RedisConnection
 import threading
 from entity import StockPriceHistory, StockInfo
 
@@ -71,6 +71,9 @@ def get_today_price():
 
 
 if __name__ == "__main__":
+    # rec = RedisConnection()
+    # rc = rec.get_connection()
+    # rc.set("a", 111)
     get_today_price()
     # history = handle_single_stock("sh600000", "2021-11-26")
     # s = ResponseEntity.serialize(history)

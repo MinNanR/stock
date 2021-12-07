@@ -1,9 +1,9 @@
 from __future__ import unicode_literals, absolute_import
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, String, Date, DateTime, ForeignKey, DECIMAL,UniqueConstraint
+from sqlalchemy import Column, Integer, String, Date, DateTime, ForeignKey, DECIMAL, UniqueConstraint
 from sqlalchemy import create_engine, desc, inspect
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.serializer  import loads, dumps
+from sqlalchemy.ext.serializer import loads, dumps
 import json
 from flask import jsonify
 
@@ -36,27 +36,22 @@ class StockPriceHistory(ModelBase):
     note_date = Column(Date)
     create_time = Column(DateTime)
 
-    UniqueConstraint(stock_id, note_date, name="stock_price_history_unique_key")
+    UniqueConstraint(stock_id, note_date,
+                     name="stock_price_history_unique_key")
 
-def to_json(e):
-    m = {}
-    for field in e.__dict__:
-        print(field, e.__dict__[field])
 
-def test():
-    engine = create_engine(
-        "mysql+pymysql://Minnan:minnan@minnan.site:3306/stock", echo=True)
-    Session = sessionmaker(bind=engine)
-    session = Session()
-    
-    query = (session
-             .query(StockPriceHistory)
-             .filter(StockPriceHistory.stock_id == 1)
-             .order_by(desc(StockPriceHistory.note_date))
-             .limit(1))
+class AuthUser(ModelBase):
+    __tablename__ = "auth_user"
 
-    
-    
-
-if __name__ == "__main__":
-    test()
+    id = Column(Integer, primary_key=True)
+    username = Column(String(length=50))
+    password = Column(String(length=200))
+    password_stamp = Column(String(length=32))
+    nick_name = Column(String(length=30))
+    role = Column(String(length=20))
+    create_time = Column(DateTime)
+    create_user_id = Column(Integer)
+    create_user_name = Column(String(length=30))
+    update_time = Column(DateTime)
+    update_user_id = Column(Integer)
+    update_user_name = Column(String(length=30))

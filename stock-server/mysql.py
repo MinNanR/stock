@@ -6,7 +6,7 @@ from sqlalchemy.orm.session import Session, sessionmaker
 from sqlalchemy.dialects.mysql import insert
 from config import datasource
 
-from entity import StockInfo, StockPriceHistory
+from entity import StockInfo, StockPriceHistory, AuthUser
 
 engine
 Session
@@ -93,14 +93,20 @@ class StockPriceHistoryDb:
                    .query(StockPriceHistory, StockInfo.stock_name, StockInfo.stock_code)
                    .join(StockInfo, StockInfo.id == StockPriceHistory.stock_id)
                    .filter(StockPriceHistory.note_date == note_date)
+                   .filter(StockPriceHistory.end_price > StockPriceHistory.avg_price_past_120_days)
+                   .filter(StockPriceHistory.end_price_last < StockPriceHistory.avg_price_past_120_days_last)
                    .offset(start)
                    .limit(page_size)).all()
         return results
 
     def count_eliablge_stock_list(self, note_date: str):
         session = Session()
-        count = session.query(func.count(StockPriceHistory.id)).filter(
-            StockPriceHistory.note_date == note_date).scalar()
+        count = (session
+                 .query(func.count(StockPriceHistory.id))
+                 .filter(StockPriceHistory.note_date == note_date)
+                 .filter(StockPriceHistory.end_price > StockPriceHistory.avg_price_past_120_days)
+                 .filter(StockPriceHistory.end_price_last < StockPriceHistory.avg_price_past_120_days_last)
+                 .scalar())
         return count
 
     def call_procedure_calculate_avg_price(self, note_date: str):
@@ -111,5 +117,16 @@ class StockPriceHistoryDb:
         session.commit()
 
 
+class AuthUserDB():
+    def add_user(self, user: AuthUser):
+        session = Session()
+        session.add(user)
+        session.commit()
+
+    def get_user_by_username(self, username:str):
+        session = Session()
+        return session.query(AuthUser).filter(AuthUser.username == username).limit(1).first()
+
 stock_db = StockDb()
 stock_price_history_db = StockPriceHistoryDb()
+auth_user_db = AuthUserDB()

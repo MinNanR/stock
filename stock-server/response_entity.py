@@ -44,7 +44,14 @@ class ResponseEntity:
         response_entity = ResponseEntity(response_code)
         response_entity.data = data
         response_entity.message = message
+        return response_entity
 
+    @staticmethod
+    def invalid_param(response_code=RESPONSE_CODE_INVALID_PARAM, message=RESPONSE_CODE_INVALID_PARAM.message, data=None):
+        response_entity = ResponseEntity(response_code)
+        response_entity.data = data
+        response_entity.message = message
+        return response_entity
 
 class ListQueryVO:
     def __init__(self, l: list, total_count: int):
