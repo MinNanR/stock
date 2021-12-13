@@ -45,8 +45,14 @@ def handle_single_stock(stock_code: str, date_str: str):
 
 
 def get_today_price():
-    init_db()
     date_str = datetime.now().strftime("%Y-%m-%d")
+    if(not detected(date_str)):
+        print("今日未开盘")
+        return -1
+    init_db()
+    rec = RedisConnection()
+    rc = rec.get_connection()
+    rc.set("lock", 1)
     start = 0
     thread_list = []
     while(True):
@@ -68,6 +74,17 @@ def get_today_price():
             t.join()
 
     stock_price_history_db.call_procedure_calculate_avg_price(date_str)
+    rc.delete("lock")
+
+#探测请求，探测今日有无开盘
+def detected(date_str:str):
+    url = "https://api.doctorxiong.club/v1/stock/kline/day?token=LJUjbTGJeO&code=sh000001&startDate={0}&endDate={1}&type=1"
+    full_url = url.format(date_str, date_str)
+    response = requests.get(full_url)
+    response_json = response.json()
+    print("探测请求,{}".format(response_json))
+    return response_json["code"] == 200
+
 
 
 if __name__ == "__main__":

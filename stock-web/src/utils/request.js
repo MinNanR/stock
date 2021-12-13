@@ -1,6 +1,7 @@
 import axios from 'axios'
 import config from './config.js'
 import app from '../main.js'
+import router from '../router/index.js'
 console.log(config.baseUrl)
 
 const request = axios.create({
@@ -46,15 +47,17 @@ request.interceptors.response.use(
     },
     error => {
         if (error.response != null) {
+            console.log(error.response.status)
             if (error.response.status != null) {
                 if (error.response.status === 401) {
-                    localStorage.removeItem("rental-token")
+                    localStorage.removeItem("stock-token")
                     alert("登录信息过期")
-                    app.router.push("/login")
+                    console.log(app.router)
+                    router.push("/login")
                 } else if (error.response.status === 403) {
-                    localStorage.removeItem("rental-token")
+                    localStorage.removeItem("stock-token")
                     alert("无权限")
-                    app.router.push('/login')
+                    router.push('/login')
                 }
                 return Promise.reject(error)
             } else {

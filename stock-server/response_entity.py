@@ -23,8 +23,13 @@ class ResponseEntity:
         self.message = response_code.message
 
     def serialize(self):
-        return json.dumps(self, default=lambda obj: obj.__dict__,
-                          sort_keys=True, ensure_ascii=False)
+        # return json.dumps(self, default=lambda obj: obj.__dict__,
+        #                   sort_keys=True, ensure_ascii=False)
+        return {
+            "code": self.code,
+            "message": self.message,
+            "data": self.data
+        }
 
     @staticmethod
     def success(data=None, message=RESPONSE_CODE_SUCCESS.message):

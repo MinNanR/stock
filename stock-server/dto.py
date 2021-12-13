@@ -45,21 +45,21 @@ class GetEligibleStockList(DTO):
             self.m['noteDate'] = noteDate
             return self
         else:
-            return self.m[noteDate]
+            return self.m['noteDate']
 
     def pageSize(self, pageSize=None, isSet=False):
         if(pageSize != None or isSet):
             self.m['pageSize'] = pageSize
             return self
         else:
-            return self.m[pageSize]
+            return self.m['pageSize']
 
     def pageIndex(self, pageIndex=None, isSet=False):
         if(pageIndex != None or isSet):
             self.m['pageIndex'] = pageIndex
             return self
         else:
-            return self.m[pageIndex]
+            return self.m['pageIndex']
             
     def get_start(self):
         return (self.pageIndex() - 1) * self.pageSize()
@@ -80,5 +80,5 @@ class GetEligibleStockList(DTO):
         (self
         .noteDate(j.get("noteDate"), isSet=True)
         .pageIndex(j.get("pageIndex"), isSet=True)
-        .page_size(j.get("page_size"), isSet=True)
+        .pageSize(j.get("pageSize"), isSet=True)
         )

@@ -60,8 +60,7 @@ import dayjs from "dayjs";
 export default {
   data() {
     return {
-      tableData: [
-      ],
+      tableData: [],
       queryForm: {
         // keyword: "",
         noteDate: "",
@@ -74,11 +73,16 @@ export default {
   methods: {
     querySotckList() {
       this.request
-        .post("/stock/getEligibleStockList", this.queryForm)
+        .post("/getEligibleStockList", this.queryForm)
         .then((response) => {
           let data = response.data;
-          this.tableData = data["stockList"];
-          this.total = data["totalCount"]
+          this.tableData = data["list"];
+          this.total = data["totalCount"];
+        })
+        .catch((error) => {
+          alert(error);
+          this.tableData = [];
+          this.total = 0;
         });
     },
     handleSizeChange(val) {
@@ -86,7 +90,7 @@ export default {
       this.querySotckList(1);
     },
     handleCurrentChange(val) {
-      this.queryForm.pageIndex = val
+      this.queryForm.pageIndex = val;
       this.querySotckList(val);
     },
   },
