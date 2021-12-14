@@ -6,6 +6,7 @@ from mysql import stock_db, stock_price_history_db, init_db
 from redis_connection import RedisConnection
 import threading
 from entity import StockPriceHistory, StockInfo
+import time
 
 from response_entity import ResponseEntity
 
@@ -46,6 +47,7 @@ def handle_single_stock(stock_code: str, date_str: str):
 
 def get_today_price():
     init_db()
+    time_start = time.time()
     date_str = datetime.now().strftime("%Y-%m-%d")
     start = 0
     thread_list = []
@@ -54,26 +56,30 @@ def get_today_price():
         print("fetch data {0} row".format(len(stock_list)))
         t = threading.Thread(target=do_get_today_price,
                              args=(stock_list, date_str))
+
+        t.start()                            
         thread_list.append(t)
         start += 1000
         if(len(stock_list) < 1000):
             break
 
-    t_threading_list = [thread_list[i:i+3]
-                        for i in range(0, len(thread_list), 3)]
-    for l in t_threading_list:
-        for t in l:
-            t.start()
-        for t in l:
-            t.join()
+    for t in thread_list:
+        t.join()
+    # t_threading_list = [thread_list[i:i+3]
+    #                     for i in range(0, len(thread_list), 3)]
+    # for l in t_threading_list:
+    #     for t in l:
+    #         t.start()
+    #     for t in l:
+    #         t.join()
 
+    time_end = time.time()
+    time_consume = time_end - time_start
+    print("data collect done, consumer {0} second".format(time_consume))
     stock_price_history_db.call_procedure_calculate_avg_price(date_str)
 
 
 if __name__ == "__main__":
-    # rec = RedisConnection()
-    # rc = rec.get_connection()
-    # rc.set("a", 111)
     get_today_price()
     # history = handle_single_stock("sh600000", "2021-11-26")
     # s = ResponseEntity.serialize(history)
