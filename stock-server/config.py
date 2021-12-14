@@ -14,5 +14,6 @@ redis_config = {
 }
 
 jwt_config = {
-    "secret": "min107"
+    "secret": "min107",
+    "authpath": ["/stock/auth/login"]
 }

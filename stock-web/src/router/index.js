@@ -1,6 +1,14 @@
 import { createRouter, createWebHashHistory } from "vue-router";
 
-const routes = [{
+const routes = [
+    {
+        path:'/login',
+        component: () => import('../components/page/login.vue'),
+        meta: {
+            title: '登录',
+        }
+    },
+    {
     path: '/',
     component: () =>
         import ('../components/layout/layout.vue'),
@@ -20,18 +28,18 @@ const router = createRouter({
     routes: routes
 })
 
-// router.beforeEach((to, from, next) => {
-//     if (to.path == '/unauthorized' || to.path == '/login') {
-//         next()
-//     } else {
-//         const token = localStorage.getItem("rental-token")
-//         if (token == null) {
-//             next('/login')
-//         } else {
-//             next()
-//         }
-//         document.title = to.meta.title || '出租屋管理系统'
-//     }
-// })
+router.beforeEach((to, from, next) => {
+    if (to.path == '/unauthorized' || to.path == '/login') {
+        next()
+    } else {
+        const token = localStorage.getItem("stock-token")
+        if (token == null) {
+            next('/login')
+        } else {
+            next()
+        }
+        document.title = to.meta.title || 'Stock'
+    }
+})
 
 export default router
