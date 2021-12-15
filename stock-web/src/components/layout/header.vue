@@ -13,9 +13,21 @@
 export default {
   data() {
     return {
-      username: "民难",
+      username: "",
     };
   },
+  methods:{
+    getUserInfo(){
+      this.request.post("/auth/getUserInfo", {})
+      .then(response => {
+        let data = response.data
+        this.username = data.user.nickName
+      })
+    }
+  },
+  mounted(){
+    // this.getUserInfo()
+  }
 };
 </script>
 

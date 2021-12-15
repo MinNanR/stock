@@ -32,7 +32,9 @@
       />
       <el-table-column prop="createTime" label="记录时间" width="150" />
       <el-table-column label="操作">
-        <el-button type="primary">查看</el-button>
+        <template #default="scope">
+          <el-button type="primary" @click="refer(scope.row.id)">查看</el-button>
+        </template>
       </el-table-column>
     </el-table>
     <div style="display: flex; margin-top: 30px">
@@ -80,7 +82,9 @@ export default {
           this.total = data["totalCount"];
         })
         .catch((error) => {
-          alert(error);
+          if (error === "数据统计中") {
+            alert(error);
+          }
           this.tableData = [];
           this.total = 0;
         });
@@ -92,6 +96,9 @@ export default {
     handleCurrentChange(val) {
       this.queryForm.pageIndex = val;
       this.querySotckList(val);
+    },
+    refer(stockId) {
+      this.$router.push("/kline?id=" + stockId);
     },
   },
   mounted() {

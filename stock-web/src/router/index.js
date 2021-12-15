@@ -20,6 +20,9 @@ const routes = [
         path: "/user",
         component: () =>
             import ('../components/page/user.vue')
+    },{
+        path: '/kline',
+        component: () =>import ('../components/page/kline.vue')
     }]
 }]
 

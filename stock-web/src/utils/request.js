@@ -1,6 +1,5 @@
 import axios from 'axios'
 import config from './config.js'
-import app from '../main.js'
 import router from '../router/index.js'
 console.log(config.baseUrl)
 
@@ -52,7 +51,6 @@ request.interceptors.response.use(
                 if (error.response.status === 401) {
                     localStorage.removeItem("stock-token")
                     alert("登录信息过期")
-                    console.log(app.router)
                     router.push("/login")
                 } else if (error.response.status === 403) {
                     localStorage.removeItem("stock-token")

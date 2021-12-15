@@ -39,7 +39,7 @@ class LoginDTO(DTO):
          )
         print(self.m)
 
-class GetEligibleStockList(DTO):
+class GetEligibleStockListDTO(DTO):
     def noteDate(self, noteDate=None, isSet=False):
         if(noteDate != None or isSet):
             self.m['noteDate'] = noteDate
@@ -82,3 +82,19 @@ class GetEligibleStockList(DTO):
         .pageIndex(j.get("pageIndex"), isSet=True)
         .pageSize(j.get("pageSize"), isSet=True)
         )
+
+class GetKlineDataDTO(DTO):
+    def id(self, id=None, isSet=False):
+        if(id != None or isSet):
+            self.m['id'] = id
+            return self
+        else:
+            return self.m['id']
+
+    def __init__(self,request):
+        DTO.__init__(self)
+        j = request.json
+        self.id(j.get("id"), isSet=True)
+
+    def validate(self):
+        return [{"field":"id", "message":"id 不能为空"}] if self.id is None else []

@@ -21,7 +21,7 @@ def init_db():
     schema = datasource["schema"]
     url = "mysql+pymysql://{0}:{1}@{2}:{3}/{4}".format(
         user, password, host, port, schema)
-    engine = create_engine(url, echo=True)
+    engine = create_engine(url, echo=False)
     Session = sessionmaker(bind=engine)
 
 
@@ -108,6 +108,14 @@ class StockPriceHistoryDb:
                  .filter(StockPriceHistory.end_price_last < StockPriceHistory.avg_price_past_120_days_last)
                  .scalar())
         return count
+
+    def get_k_line_data(self,stock_id :int):
+        session = Session()
+        return (session.query(StockPriceHistory)
+            .filter(StockPriceHistory.stock_id == stock_id)
+            .order_by(StockPriceHistory.note_date)).all()
+
+
 
     def call_procedure_calculate_avg_price(self, note_date: str):
         sql = "call calculate_avg_price('{0}')".format(note_date)

@@ -1,5 +1,4 @@
-# from redis_connection import init_redis
-from sys import path
+from logging import debug
 from flask import Flask, request, jsonify, session, abort
 from sqlalchemy.sql.functions import user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -24,27 +23,14 @@ auth_path = jwt_config["authpath"]
 rec = RedisConnection()
 
 
-class Config(object):
-    JOBS = [
-        {
-            "id": "job1",
-            "func": "__main__:daily_task",
-            "args": (),
-            "trigger": "cron",
-            "minute": 54,
-        }
-    ]
-
-
-def daily_task():
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    print(now)
+@app.before_request
+def option_filter():
+    if str.upper(request.method) == "OPTIONS":
+        return "ok", 200
 
 
 @app.before_request
 def authorization_filter():
-    if str.upper(request.method) == "OPTIONS":
-        return "ok", 200
 
     url = request.path
     if url in auth_path:
@@ -55,7 +41,6 @@ def authorization_filter():
         abort(401)
 
     payload = jwt.decode(token[7:], key=jwt_config["secret"], algorithms=["HS256"])
-    print(payload)
     user = load_user_by_username(payload["data"]["username"])
     if (user == None) or user["password_stamp"] != payload["data"]["passwordStamp"]:
         abort(401)
@@ -64,15 +49,9 @@ def authorization_filter():
     return None
 
 
-@app.route("/", methods=["POST"])
-def hello_world():
-    response_entity = ResponseEntity.success()
-    return response_entity.serialize()
-
-
 @app.route("/stock/getEligibleStockList", methods=["POST"])
 def get_eligible_stock_list():
-    dto = GetEligibleStockList(request)
+    dto = GetEligibleStockListDTO(request)
     validate_msg = dto.validate()
     if len(validate_msg) > 0:
         return ResponseEntity.invalid_param(data=validate_msg).serialize()
@@ -92,7 +71,7 @@ def get_eligible_stock_list():
     stocks = [
         {
             "id": int(item[0].id),
-            "sotckId": int(item[0].stock_id),
+            "stockId": int(item[0].stock_id),
             "stockName": str(item.stock_name),
             "stockCode": str(item.stock_code),
             "startPrice": str(item[0].start_price),
@@ -111,6 +90,33 @@ def get_eligible_stock_list():
     return response_entity.serialize()
 
 
+@app.route("/stock/getKLineData", methods=["POST"])
+def get_k_line_data():
+    dto = GetKlineDataDTO(request)
+    validate_msg = dto.validate()
+    if len(validate_msg) > 0:
+        return ResponseEntity.invalid_param(data=validate_msg).serialize()
+
+    raw_data = stock_price_history_db.get_k_line_data(dto.id())
+    dates = [str(item.note_date) for item in raw_data]
+    k_line_data = [
+        [
+            float(item.start_price),
+            float(item.end_price),
+            float(item.lowest_price),
+            float(item.highest_price),
+        ]
+        for item in raw_data
+    ]
+
+    avg_line_data = [
+        float(item.avg_price_past_120_days) if item.avg_price_past_120_days else None
+        for item in raw_data
+    ]
+    reulst = {"dates": dates, "kLineData": k_line_data, "avgLineData": avg_line_data}
+    return ResponseEntity.success(data=reulst).serialize()
+
+
 @app.route("/stock/auth/login", methods=["POST"])
 def login():
     dto = LoginDTO(request)
@@ -118,7 +124,6 @@ def login():
     if len(validate) > 0:
         return ResponseEntity.invalid_param(data=validate).serialize()
 
-    print(dto.username())
     auth_user = load_user_by_username(dto.username())
     if auth_user == None:
         return ResponseEntity.fail(message="用户不存在").serialize()
@@ -142,6 +147,19 @@ def login():
     return jsonify(ResponseEntity.success(data=data).serialize())
 
 
+@app.route("/stock/auth/getUserInfo", methods=["POST"])
+def get_user_info():
+    principal = session.get("principal")
+    data = {
+        "user": {
+            "username": principal["username"],
+            "nickName": principal["nick_name"],
+        }
+    }
+    print(data)
+    return ResponseEntity.success(data=data).serialize()
+
+
 def get_start(page_index: int, page_size: int):
     return (page_index - 1) * page_size
 
@@ -159,6 +177,7 @@ def load_user_by_username(username: str):
             "password": str(auth_user.password),
             "password_stamp": str(auth_user.password_stamp),
             "role": str(auth_user.role),
+            "nick_name": str(auth_user.nick_name),
         }
         rc.set(
             "authUser:" + str(auth_user.username), json.dumps(u), ex=timedelta(hours=1)
@@ -168,10 +187,6 @@ def load_user_by_username(username: str):
 
 
 if __name__ == "__main__":
-    # app.config.from_object(Config())
-    # scheduler = APScheduler()
-    # scheduler.init_app(app)
-    # scheduler.start()
     init_db()
 
     app.secret_key = os.urandom(24)
