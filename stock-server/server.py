@@ -3,7 +3,7 @@ from flask import Flask, request, jsonify, session, abort
 from sqlalchemy.sql.functions import user
 from werkzeug.security import generate_password_hash, check_password_hash
 from response_entity import *
-from flask_apscheduler import APScheduler
+from flask_apscheduler import APScheduler, scheduler
 from datetime import datetime, timedelta
 from flask_cors import CORS
 from mysql import init_db, stock_db, stock_price_history_db, auth_user_db
@@ -15,6 +15,18 @@ import os
 from dto import *
 import time
 import jwt
+from task import get_today_price
+
+class Config(object):
+    JOBS=[
+        {
+            "id":"daily_stock_task",
+            "func": get_today_price,
+            'trigger':'cron',
+            'hour': 15,
+            "minute":30,
+        }
+    ]
 
 app = Flask(__name__)
 CORS(app, resources=r"/*")
@@ -187,10 +199,14 @@ def load_user_by_username(username: str):
 
 
 if __name__ == "__main__":
+    app.config.from_object(Config())
+    scheduler = APScheduler()
+    scheduler.init_app(app)
+    scheduler.start()
     init_db()
 
     app.secret_key = os.urandom(24)
-    app.run(port=8150, debug=True)
+    app.run(port=8150, debug=True, use_reloader=False)
     # auth_user = AuthUser()
     # auth_user.username = "Leo"
     # auth_user.password = generate_password_hash("2b7ec156d236ae2b942f28a5391bca76")

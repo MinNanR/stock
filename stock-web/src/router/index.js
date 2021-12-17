@@ -2,29 +2,30 @@ import { createRouter, createWebHashHistory } from "vue-router";
 
 const routes = [
     {
-        path:'/login',
+        path: '/login',
         component: () => import('../components/page/login.vue'),
         meta: {
             title: '登录',
         }
     },
     {
-    path: '/',
-    component: () =>
-        import ('../components/layout/layout.vue'),
-    children: [{
-        path: "/",
+        path: '/',
         component: () =>
-            import ('../components/page/index.vue')
-    }, {
-        path: "/user",
-        component: () =>
-            import ('../components/page/user.vue')
-    },{
-        path: '/kline',
-        component: () =>import ('../components/page/kline.vue')
+            import('../components/layout/layout.vue'),
+        children: [{
+            path: "/",
+            component: () =>
+                import('../components/page/index.vue')
+        }, {
+            path: "/user",
+            component: () =>
+                import('../components/page/user.vue')
+        }, {
+            path: '/kline',
+            name: "KLine",
+            component: () => import('../components/page/kline.vue')
+        }]
     }]
-}]
 
 const router = createRouter({
     history: createWebHashHistory("stock"),

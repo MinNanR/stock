@@ -52,39 +52,32 @@ def get_today_price():
     if(not detected(date_str)):
         print("今日未开盘")
         return -1
-    # init_db()
-    # rec = RedisConnection()
-    # rc = rec.get_connection()
-    # rc.set("lock", 1)
-    # start = 0
-    # thread_list = []
-    # while(True):
-    #     stock_list = stock_db.get_stock_list(start)
-    #     print("fetch data {0} row".format(len(stock_list)))
-    #     t = threading.Thread(target=do_get_today_price,
-    #                          args=(stock_list, date_str))
+    init_db()
+    rec = RedisConnection()
+    rc = rec.get_connection()
+    rc.set("lock", 1)
+    start = 0
+    thread_list = []
+    while(True):
+        stock_list = stock_db.get_stock_list(start)
+        print("fetch data {0} row".format(len(stock_list)))
+        t = threading.Thread(target=do_get_today_price,
+                             args=(stock_list, date_str))
 
-    #     t.start()                            
-    #     thread_list.append(t)
-    #     start += 1000
-    #     if(len(stock_list) < 1000):
-    #         break
+        t.start()                            
+        thread_list.append(t)
+        start += 1000
+        if(len(stock_list) < 1000):
+            break
 
-    # for t in thread_list:
-    #     t.join()
-    # # t_threading_list = [thread_list[i:i+3]
-    # #                     for i in range(0, len(thread_list), 3)]
-    # # for l in t_threading_list:
-    # #     for t in l:
-    # #         t.start()
-    # #     for t in l:
-    # #         t.join()
+    for t in thread_list:
+        t.join()
 
-    # time_end = time.time()
-    # time_consume = time_end - time_start
-    # print("data collect done, consumer {0} second".format(time_consume))
-    # stock_price_history_db.call_procedure_calculate_avg_price(date_str)
-    # rc.delete("lock")
+    time_end = time.time()
+    time_consume = time_end - time_start
+    print("data collect done, consumer {0} second".format(time_consume))
+    stock_price_history_db.call_procedure_calculate_avg_price(date_str)
+    rc.delete("lock")
 
 #探测请求，探测今日有无开盘
 def detected(date_str:str):

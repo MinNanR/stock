@@ -33,7 +33,7 @@
       <el-table-column prop="createTime" label="记录时间" width="150" />
       <el-table-column label="操作">
         <template #default="scope">
-          <el-button type="primary" @click="refer(scope.row.id)">查看</el-button>
+          <el-button type="primary" @click="refer(scope.row)">查看</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -60,6 +60,7 @@
 import dayjs from "dayjs";
 
 export default {
+  name:"index",
   data() {
     return {
       tableData: [],
@@ -97,8 +98,15 @@ export default {
       this.queryForm.pageIndex = val;
       this.querySotckList(val);
     },
-    refer(stockId) {
-      this.$router.push("/kline?id=" + stockId);
+    refer(row) {
+      this.$router.push({
+        name: "KLine",
+        params: {
+          id: row.stockId,
+          stockName: row.stockName,
+          stockCode: row.stockCode,
+        },
+      });
     },
   },
   mounted() {

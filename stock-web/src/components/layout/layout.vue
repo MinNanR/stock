@@ -9,7 +9,11 @@
       </el-aside>
       <el-main style="padding: 0">
         <div class="main-content">
-          <router-view></router-view>
+          <router-view v-slot="{Component}">
+            <keep-alive include="index">
+              <component :is="Component"></component>
+            </keep-alive>
+          </router-view>
         </div>
       </el-main>
     </el-container>

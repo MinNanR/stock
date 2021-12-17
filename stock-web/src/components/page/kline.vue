@@ -1,22 +1,30 @@
 <template>
-  <div id="charts">
-    <div id="myChart" style="width: 80vw; height: 600px"></div>
+  <div>
+    <div style="display: flex; flex-direction:row;align-items: center">
+      <el-button type="primary" style="font-size: 18px;" @click="turnBack()">后退</el-button>
+      <div style="margin-left :30px;font-size:18px;">{{stockName}} : {{stockCode}}</div>
+    </div>
+    <div id="charts" style="margin-top: 30px;">
+      <div id="myChart" style="width: 80vw; height: 600px"></div>
+    </div>
   </div>
 </template>
 
 <script>
-import * as echarts from "echarts";
 
 export default {
-  data(){
-    return{
-      id:''
-    }
+  data() {
+    return {
+      id: "",
+      stockName: "",
+      stockCode: "",
+      chart : null
+    };
   },
   methods: {
     drawChart(data) {
       // 基于准备好的dom，初始化echarts实例【这里存在一个问题，请看到最后】
-      let myChart = echarts.init(document.getElementById("myChart"));
+      this.chart = this.$echarts.init(document.getElementById("myChart"))
       // 指定图表的配置项和数据
       let option = {
         legend: {
@@ -97,7 +105,9 @@ export default {
         ],
       };
       // 使用刚指定的配置项和数据显示图表。
-      myChart.setOption(option);
+      console.log(option)
+      this.chart.setOption(option);
+      document.getElementById("myChart").removeAttribute("_echarts_instance_")
     },
     getData() {
       this.request.post("/getKLineData", { id: this.id }).then((response) => {
@@ -105,11 +115,18 @@ export default {
         this.drawChart(data);
       });
     },
+    turnBack(){
+      this.$router.go(-1)
+    }
   },
   mounted() {
-    let id = this.$route.query.id
-    this.stockId = id;
-    this.getData(id);
+    let id = this.$route.params.id;
+    let stockName = this.$route.params.stockName;
+    let stockCode = this.$route.params.stockCode;
+    this.id = id;
+    this.stockName = stockName;
+    this.stockCode = stockCode;
+    this.getData();
   },
 };
 </script>
