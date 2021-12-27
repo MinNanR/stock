@@ -17,9 +17,9 @@
         <el-button type="primary" @click="querySotckList">查询</el-button>
       </el-form-item>
     </el-form>
-    <el-table :data="tableData" stripe style="width: 100%">
+    <el-table :data="tableData" stripe style="width: 100%"  @cell-click="cellClick">
       <el-table-column type="index" width="50" />
-      <el-table-column prop="stockName" label="名称" width="150" />
+      <el-table-column prop="stockName" label="名称" width="150"/>
       <el-table-column prop="stockCode" label="代码" width="150" />
       <el-table-column prop="startPrice" label="当日开盘价" width="150" />
       <el-table-column prop="endPrice" label="当日收盘价" width="150" />
@@ -45,8 +45,8 @@
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
         :current-page="queryForm.pageIndex"
-        :page-sizes="[10, 20, 50, 100]"
-        :page-size="10"
+        :page-sizes="[10, 20, 30, 50]"
+        :page-size="queryForm.pageSize"
         :hide-on-single-page="false"
         layout="total, sizes, prev, pager, next, jumper"
         :total="total"
@@ -60,7 +60,7 @@
 import dayjs from "dayjs";
 
 export default {
-  name:"index",
+  name: "index",
   data() {
     return {
       tableData: [],
@@ -108,6 +108,12 @@ export default {
         },
       });
     },
+    cellClick(row, column){
+      if(column.no === 1){
+        this.refer(row)
+      }
+
+    }
   },
   mounted() {
     this.queryForm.noteDate = dayjs().format("YYYY-MM-DD");
@@ -116,4 +122,7 @@ export default {
 </script>
 
 <style>
+.el-table_1_column_2 > div:hover{
+  cursor: pointer;
+}
 </style>

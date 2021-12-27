@@ -18,13 +18,12 @@ export default {
       id: "",
       stockName: "",
       stockCode: "",
-      chart : null
     };
   },
   methods: {
     drawChart(data) {
       // 基于准备好的dom，初始化echarts实例【这里存在一个问题，请看到最后】
-      this.chart = this.$echarts.init(document.getElementById("myChart"))
+      let chart = this.$echarts.init(document.getElementById("myChart"))
       // 指定图表的配置项和数据
       let option = {
         legend: {
@@ -105,8 +104,7 @@ export default {
         ],
       };
       // 使用刚指定的配置项和数据显示图表。
-      console.log(option)
-      this.chart.setOption(option);
+      chart.setOption(option);
       document.getElementById("myChart").removeAttribute("_echarts_instance_")
     },
     getData() {
