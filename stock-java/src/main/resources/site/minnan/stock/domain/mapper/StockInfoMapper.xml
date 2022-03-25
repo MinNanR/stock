@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="site.minnan.stock.domain.mapper.StockInfoMapper">
+
+    <!--批量添加股票信息-->
+    <insert id="addStockInfoBatch">
+        insert into stock_info (stock_name, stock_nick_code, stock_code, detected)
+        values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.stockName}, #{item.stockNickCode}, #{item.stockCode}, #{item.detected})
+        </foreach>
+    </insert>
+
+    <!--批量添加股票历史价格数据-->
+    <insert id="insertStockPriceHistoryBatch">
+        insert into stock_price_history
+        (stock_id, start_price, end_price, highest_price, lowest_price, volume, end_price_last, avg_price_past_120_days,
+         avg_price_past_120_days_last, note_date, create_time)
+        values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.startPrice}, #{item.endPrice}, #{item.highestPrice}, #{item.lowestPrice}, #{item.lowestPrice},
+            #{item.volume}, #{item.endPriceLast}, #{item.avgPricePast120Days}, #{item.avgPricePast120DaysLast},
+            #{item.noteDate}, now())
+        </foreach>
+        on duplicate key update start_price                  = values(start_price),
+                                end_price                    = values(end_price),
+                                highest_price                = values(highest_price),
+                                lowest_price                 = values(lowest_price),
+                                volume                       = values(volume),
+                                end_price_last               = values(end_price_last),
+                                avg_price_past_120_days      = values(avg_price_past_120_days),
+                                avg_price_past_120_days_last = values(avg_price_past_120_days_last),
+                                create_time                  = now()
+    </insert>
+</mapper>
