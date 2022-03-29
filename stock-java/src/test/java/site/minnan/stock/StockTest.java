@@ -1,11 +1,14 @@
 package site.minnan.stock;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.ListUtil;
+import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.lang.Console;
 import cn.hutool.core.thread.ExecutorBuilder;
 import cn.hutool.core.util.ReUtil;
 import cn.hutool.http.HttpResponse;
 import cn.hutool.http.HttpUtil;
+import cn.hutool.json.JSON;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -23,6 +26,8 @@ import site.minnan.stock.domain.entity.StockPriceHistory;
 import site.minnan.stock.domain.mapper.StockInfoMapper;
 import site.minnan.stock.infrastructure.utils.RedisUtil;
 
+import java.io.BufferedOutputStream;
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -68,30 +73,23 @@ public class StockTest {
     }
 
     @Test
-    public void testInitStockHistory() throws InterruptedException {
-        for (int i = 0; i < 1000; i++) {
-            StockInfo stockInfo = redisUtil.lpop("stock_list", StockInfo.class);
-            if (stockInfo == null) {
-                break;
-            }
-            List<StockPriceHistory> list = stockService.fetchStockHistory(stockInfo, "2021-01-01");
-            if (CollUtil.isEmpty(list)) {
-                stockInfo.setDetected(0);
-                stockInfoMapper.updateById(stockInfo);
-                log.info("{} 已取消检测", stockInfo.getStockNickCode());
-            } else {
-                stockService.initStockPrice(list);
-                log.info("保存 【{}】 价格数据成功，数据数量：{}条", stockInfo.getStockNickCode(), list.size());
-            }
-        }
-    }
-
-    @Test
-    public void testInitDataToProcess() {
+    public void testInitStockHistory() throws IOException {
         LambdaQueryWrapper<StockInfo> query = Wrappers.<StockInfo>lambdaQuery()
                 .eq(StockInfo::getDetected, 1);
         query.last(" and id not in (select distinct stock_id from stock_price_history)");
         List<StockInfo> all = stockInfoMapper.selectList(query);
-        all.forEach(e -> redisUtil.rpush("stock_list", e));
+
+        List<List<StockInfo>> splitList = CollUtil.split(all, 500);
+        int size = splitList.size();
+        for (int i = 0; i < size; i++) {
+            List<StockInfo> list = splitList.get(i);
+            BufferedOutputStream os = FileUtil.getOutputStream(FileUtil.touch("F:\\Minnan\\stock\\stock-java" +
+                    "\\logs\\insert_" + i + ".sql"));
+            for (StockInfo stockInfo : list) {
+                stockService.initStockPrice(stockInfo, os);
+            }
+            log.info("构建第{}段sql成功", i);
+            os.close();
+        }
     }
 }

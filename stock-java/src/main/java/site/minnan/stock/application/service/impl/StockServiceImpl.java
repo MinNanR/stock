@@ -1,6 +1,9 @@
 package site.minnan.stock.application.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpResponse;
@@ -17,7 +20,11 @@ import site.minnan.stock.application.service.StockService;
 import site.minnan.stock.domain.aggregate.StockInfo;
 import site.minnan.stock.domain.entity.StockPriceHistory;
 import site.minnan.stock.domain.mapper.StockInfoMapper;
+import site.minnan.stock.domain.mapper.StockPriceHistoryMapper;
+import site.minnan.stock.infrastructure.utils.RedisUtil;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
@@ -41,6 +48,9 @@ public class StockServiceImpl implements StockService {
 
     @Value("${stock.token}")
     private String TOKEN;
+
+    @Autowired
+    private RedisUtil redisUtil;
 
     /**
      * 添加股票
@@ -87,6 +97,7 @@ public class StockServiceImpl implements StockService {
                 .map(e -> (JSONArray) e)
                 .map(item -> StockPriceHistory.builder()
                         .stockId(stockId)
+                        .stockCode(code)
                         .startPrice(item.getBigDecimal(1))
                         .endPrice(item.getBigDecimal(2))
                         .highestPrice(item.getBigDecimal(3))
@@ -100,11 +111,17 @@ public class StockServiceImpl implements StockService {
     /**
      * 初始化股票价格
      *
-     * @param priceHistoryList
+     * @param stockInfo 股票信息
      */
     @Override
     @Transactional
-    public void initStockPrice(List<StockPriceHistory> priceHistoryList) {
+    public void initStockPrice(StockInfo stockInfo, OutputStream os) throws IOException {
+        List<StockPriceHistory> priceHistoryList = fetchStockHistory(stockInfo, "2021-01-01");
+        if (CollUtil.isEmpty(priceHistoryList)) {
+            stockInfo.setDetected(0);
+            stockInfoMapper.updateById(stockInfo);
+            return;
+        }
         Iterator<StockPriceHistory> itr = priceHistoryList.iterator();
         Queue<BigDecimal> past120 = priceHistoryList.stream()
                 .limit(119)
@@ -131,7 +148,25 @@ public class StockServiceImpl implements StockService {
         for (int i = 1; i < size; i++) {
             priceHistoryList.get(i).setEndPriceLast(priceHistoryList.get(i - 1).getEndPrice());
         }
-        int i = stockInfoMapper.insertStockPriceHistoryBatch(priceHistoryList);
-//        log.info(JSONUtil.toJsonPrettyStr(priceHistoryList));
+        String sql = "insert into stock_price_history (stock_id, stock_code, start_price, end_price, highest_price, " +
+                "lowest_price, volume, end_price_last, avg_price_past_120_days, avg_price_past_120_days_last, " +
+                "note_date, create_time) VALUES ";
+        String values = priceHistoryList.stream()
+                .map(e -> StrUtil.format("({},{},{},{},{},{},{},{},{},{},'{}', now())",
+                        e.getStockId(), e.getStockCode(), e.getStartPrice(), e.getEndPrice(), e.getHighestPrice(),
+                        e.getLowestPrice(), e.getVolume(), e.getEndPriceLast(), e.getAvgPricePast120Days(),
+                        e.getAvgPricePast120DaysLast(),
+                        DateUtil.format(e.getNoteDate(), "yyyy-MM-dd")))
+                .collect(Collectors.joining(","));
+        os.write((sql + values + ";").getBytes());
+        os.write('\n');
+//        int i = stockInfoMapper.insertStockPriceHistoryBatch(priceHistoryList);
+//        if (i > 0) {
+//            log.info("保存【{}】数据成功，条数==={}", stockInfo.getStockCode(), priceHistoryList.size());
+//        } else {
+//            log.info("保存【{}】数据失败", stockInfo.getStockCode());
+//        }
+//        redisUtil.hashPut("stock_price", stockInfo.getStockCode(), priceHistoryList);
+////        log.info(JSONUtil.toJsonPrettyStr(priceHistoryList));
     }
 }

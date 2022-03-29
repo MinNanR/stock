@@ -31,6 +31,11 @@ public class StockPriceHistory {
     private Integer stockId;
 
     /**
+     * 股票代码
+     */
+    private String stockCode;
+
+    /**
      * 开盘价
      */
     private BigDecimal startPrice;

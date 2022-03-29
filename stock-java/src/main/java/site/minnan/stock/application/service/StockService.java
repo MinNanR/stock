@@ -4,6 +4,8 @@ import cn.hutool.json.JSONArray;
 import site.minnan.stock.domain.aggregate.StockInfo;
 import site.minnan.stock.domain.entity.StockPriceHistory;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.List;
 
 /**
@@ -39,7 +41,7 @@ public interface StockService {
     /**
      * 初始化股票价格
      *
-     * @param priceHistoryList
+     * @param stockInfo
      */
-    void initStockPrice(List<StockPriceHistory> priceHistoryList);
+    void initStockPrice(StockInfo stockInfo, OutputStream outputStream) throws IOException;
 }
