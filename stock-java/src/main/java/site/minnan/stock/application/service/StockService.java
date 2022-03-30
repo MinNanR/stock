@@ -1,8 +1,12 @@
 package site.minnan.stock.application.service;
 
-import cn.hutool.json.JSONArray;
 import site.minnan.stock.domain.aggregate.StockInfo;
 import site.minnan.stock.domain.entity.StockPriceHistory;
+import site.minnan.stock.domain.vo.EligibleStockListVO;
+import site.minnan.stock.domain.vo.KLineVO;
+import site.minnan.stock.domain.vo.ListQueryVO;
+import site.minnan.stock.userinterface.dto.DetailsQueryDTO;
+import site.minnan.stock.userinterface.dto.GetEligibleStockListDTO;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -44,4 +48,20 @@ public interface StockService {
      * @param stockInfo
      */
     void initStockPrice(StockInfo stockInfo, OutputStream outputStream) throws IOException;
+
+    /**
+     * 查询符合条件的股票
+     *
+     * @param dto
+     * @return
+     */
+    ListQueryVO<EligibleStockListVO> getEligibleStockList(GetEligibleStockListDTO dto) throws Exception;
+
+    /**
+     * 查询K线图数据
+     *
+     * @param dto
+     * @return
+     */
+    KLineVO getKLineData(DetailsQueryDTO dto);
 }

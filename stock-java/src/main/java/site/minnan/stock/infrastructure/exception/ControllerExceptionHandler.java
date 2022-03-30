@@ -3,8 +3,6 @@ package site.minnan.stock.infrastructure.exception;
 import cn.hutool.core.map.MapBuilder;
 import cn.hutool.core.util.StrUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -28,22 +26,22 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ControllerExceptionHandler {
 
-    /**
-     * 登录时的非法用户异常
-     *
-     * @param ex 异常
-     * @return
-     */
-    @ExceptionHandler(AuthenticationException.class)
-    @ResponseBody
-    public ResponseEntity<?> handleAuthenticationException(AuthenticationException ex) {
-        log.error(StrUtil.format("fail to login {}", ex.getMessage()), ex);
-        if (ex.getMessage() != null) {
-            return ResponseEntity.fail(ResponseCode.INVALID_USER,
-                    MapBuilder.create().put("details", ex.getMessage()).build());
-        }
-        return ResponseEntity.fail(ResponseCode.INVALID_USER);
-    }
+//    /**
+//     * 登录时的非法用户异常
+//     *
+//     * @param ex 异常
+//     * @return
+//     */
+//    @ExceptionHandler(AuthenticationException.class)
+//    @ResponseBody
+//    public ResponseEntity<?> handleAuthenticationException(AuthenticationException ex) {
+//        log.error(StrUtil.format("fail to login {}", ex.getMessage()), ex);
+//        if (ex.getMessage() != null) {
+//            return ResponseEntity.fail(ResponseCode.INVALID_USER,
+//                    MapBuilder.create().put("details", ex.getMessage()).build());
+//        }
+//        return ResponseEntity.fail(ResponseCode.INVALID_USER);
+//    }
 
     /**
      * 参数非法或缺失时的异常
@@ -91,20 +89,20 @@ public class ControllerExceptionHandler {
         return ResponseEntity.fail(ex.getMessage());
     }
 
-    /**
-     * 处理无权限访问接口异常
-     *
-     * @param ex 异常
-     * @param method
-     * @return
-     */
-    @ExceptionHandler(AccessDeniedException.class)
-    @ResponseBody
-    public ResponseEntity<?> handleAccessDeniedException(AccessDeniedException ex, HandlerMethod method) {
-        String uri = method.getMethod().getAnnotation(PostMapping.class).value()[0];
-        log.error("无权限访问:" + uri, ex);
-        return ResponseEntity.invalid(ex.getMessage());
-    }
+//    /**
+//     * 处理无权限访问接口异常
+//     *
+//     * @param ex 异常
+//     * @param method
+//     * @return
+//     */
+//    @ExceptionHandler(AccessDeniedException.class)
+//    @ResponseBody
+//    public ResponseEntity<?> handleAccessDeniedException(AccessDeniedException ex, HandlerMethod method) {
+//        String uri = method.getMethod().getAnnotation(PostMapping.class).value()[0];
+//        log.error("无权限访问:" + uri, ex);
+//        return ResponseEntity.invalid(ex.getMessage());
+//    }
 
     @ExceptionHandler(UnmodifiableException.class)
     @ResponseBody

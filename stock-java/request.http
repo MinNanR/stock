@@ -1,0 +1,36 @@
+POST http://{{baseUrl}}/stock/auth/login
+Content-Type: application/json
+Accept: application/json
+
+{
+  "username": "{{username}}",
+  "password": "{{password}}"
+}
+
+> {% client.global.set("token", response.body.data.token) %}
+
+
+###
+GET https://api.doctorxiong.club/v1/stock/kline/day?token=LJUjbTGJeO&code=sh600000&startDate=2021-01-01&type=1
+
+###
+POST http://localhost:8150/stock/getEligibleStockList
+Content-Type: application/json
+Accept: application/json
+Authorization: {{token}}
+
+{
+  "noteDate": "2022-03-28",
+  "pageSize": 10,
+  "pageIndex": 1
+}
+
+###
+POST http://{{baseUrl}}/stock/getKLineData
+Content-Type: application/json
+Accept: application/json
+Authorization: {{token}}
+
+{
+  "id": 1
+}

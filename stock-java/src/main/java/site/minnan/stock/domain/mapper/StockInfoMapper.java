@@ -5,6 +5,8 @@ import org.apache.ibatis.annotations.Mapper;
 import org.springframework.stereotype.Repository;
 import site.minnan.stock.domain.aggregate.StockInfo;
 import site.minnan.stock.domain.entity.StockPriceHistory;
+import site.minnan.stock.domain.vo.EligibleStockListVO;
+import site.minnan.stock.userinterface.dto.GetEligibleStockListDTO;
 
 import java.util.List;
 
@@ -29,4 +31,21 @@ public interface StockInfoMapper extends BaseMapper<StockInfo> {
      * @return
      */
     int insertStockPriceHistoryBatch(List<StockPriceHistory> list);
+
+
+    /**
+     * 查询符合条件的股票参数
+     *
+     * @param dto
+     * @return
+     */
+    List<EligibleStockListVO> getEligibleStockList(GetEligibleStockListDTO dto);
+
+    /**
+     * 计算符合条件的股票数量
+     *
+     * @param dto
+     * @return
+     */
+    Integer countEligibleStock(GetEligibleStockListDTO dto);
 }

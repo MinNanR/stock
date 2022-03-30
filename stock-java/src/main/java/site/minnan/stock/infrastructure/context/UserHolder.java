@@ -1,5 +1,6 @@
 package site.minnan.stock.infrastructure.context;
 
+import cn.hutool.core.util.StrUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -17,6 +18,7 @@ import site.minnan.stock.infrastructure.utils.JwtUtil;
 import site.minnan.stock.userinterface.response.ResponseEntity;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.xml.ws.Response;
 
 @Aspect
 @Component
@@ -42,13 +44,22 @@ public class UserHolder {
     private void user() {
     }
 
-    @Around("user()")
+    @Pointcut("execution(public * site.minnan.stock.userinterface.fascade.AuthController..*(..))")
+    private void loginUrl(){}
+
+    @Around("user() && !loginUrl()")
     public Object setUser(ProceedingJoinPoint joinPoint) throws Throwable {
         String header = request.getHeader(AUTH_HEADER);
+        if(StrUtil.isBlank(header) || header.length() < 7){
+            return ResponseEntity.invalid("非法用户");
+        }
         String token = header.substring(7);
         String username = jwtUtil.getUsernameFromToken(token);
         Principal principal = commonUserService.loadPrincipalByUserName(username);
         if (principal == null) {
+            return ResponseEntity.invalid("非法用户");
+        }
+        if (!jwtUtil.validateToken(token, principal)) {
             return ResponseEntity.invalid("非法用户");
         }
         RequestContextHolder.currentRequestAttributes().setAttribute(USER_ATTRIBUTE_NAME, principal,

@@ -83,7 +83,7 @@ export default {
           {
             type: "candlestick",
             name: "日K",
-            data: data.kLineData,
+            data: data.candlestickChartList,
             itemStyle: {
               color: "#FD1050",
               color0: "#0CF49B",

@@ -34,4 +34,27 @@
                                 avg_price_past_120_days_last = values(avg_price_past_120_days_last),
                                 create_time                  = now()
     </insert>
+
+    <!--查询符合条件的股票-->
+    <select id="getEligibleStockList" resultType="site.minnan.stock.domain.vo.EligibleStockListVO">
+        select t1.id id, t1.stock_id, t2.stock_code stockCode, t2.stock_name stockName,
+            t1.start_price startPrice, t1.end_price endPrice, t1.highest_price highestPrice,
+            t1.lowest_price lowestPrice, t1.avg_price_past_120_days avgPricePast120Days
+        from stock_price_history t1
+            left join stock_info t2 on t1.stock_id = t2.id
+        where note_date = #{noteDate}
+            and t1.end_price_last &lt; t1.avg_price_past_120_days_last
+            and t1.end_price &gt; t1.avg_price_past_120_days
+        limit #{start}, #{pageSize}
+    </select>
+
+    <!--计算符合条件的股票数量-->
+    <select id="countEligibleStock" resultType="java.lang.Integer">
+        select count(1)
+        from stock_price_history t1
+            left join stock_info t2 on t1.stock_id = t2.id
+        where note_date = #{noteDate}
+            and t1.end_price_last &lt; t1.avg_price_past_120_days_last
+            and t1.end_price &gt; t1.avg_price_past_120_days
+    </select>
 </mapper>

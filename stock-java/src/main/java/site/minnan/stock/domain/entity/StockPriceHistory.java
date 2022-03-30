@@ -1,6 +1,7 @@
 package site.minnan.stock.domain.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.*;
@@ -68,11 +69,13 @@ public class StockPriceHistory {
     /**
      * 120天均价
      */
+    @TableField("avg_price_past_120_days")
     private BigDecimal avgPricePast120Days;
 
     /**
      * 昨日120天均价
      */
+    @TableField("avg_price_past_120_days_last")
     private BigDecimal avgPricePast120DaysLast;
 
     /**

@@ -3,7 +3,6 @@ package site.minnan.stock.application.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpResponse;
@@ -11,6 +10,9 @@ import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,14 +23,18 @@ import site.minnan.stock.domain.aggregate.StockInfo;
 import site.minnan.stock.domain.entity.StockPriceHistory;
 import site.minnan.stock.domain.mapper.StockInfoMapper;
 import site.minnan.stock.domain.mapper.StockPriceHistoryMapper;
+import site.minnan.stock.domain.vo.EligibleStockListVO;
+import site.minnan.stock.domain.vo.KLineVO;
+import site.minnan.stock.domain.vo.ListQueryVO;
 import site.minnan.stock.infrastructure.utils.RedisUtil;
+import site.minnan.stock.userinterface.dto.DetailsQueryDTO;
+import site.minnan.stock.userinterface.dto.GetEligibleStockListDTO;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 /**
@@ -42,6 +48,9 @@ public class StockServiceImpl implements StockService {
 
     @Autowired
     private StockInfoMapper stockInfoMapper;
+
+    @Autowired
+    private StockPriceHistoryMapper stockPriceHistoryMapper;
 
     @Value("${stock.priceUrl}")
     private String PRICE_URL;
@@ -168,5 +177,44 @@ public class StockServiceImpl implements StockService {
 //        }
 //        redisUtil.hashPut("stock_price", stockInfo.getStockCode(), priceHistoryList);
 ////        log.info(JSONUtil.toJsonPrettyStr(priceHistoryList));
+    }
+
+    /**
+     * 查询符合条件的股票
+     *
+     * @return
+     * @param dto
+     */
+    @Override
+    public ListQueryVO<EligibleStockListVO> getEligibleStockList(GetEligibleStockListDTO dto) throws Exception {
+        Object lock = redisUtil.getValue("lock");
+        if(lock != null){
+            throw new Exception("数据统计中");
+        }
+        Integer totalCount = stockInfoMapper.countEligibleStock(dto);
+        List<EligibleStockListVO> list = totalCount > 0 ?
+                stockInfoMapper.getEligibleStockList(dto) :
+                ListUtil.empty();
+        return new ListQueryVO<>(list, totalCount);
+    }
+
+    /**
+     * 查询K线图数据
+     *
+     * @param dto
+     * @return
+     */
+    @Override
+    public KLineVO getKLineData(DetailsQueryDTO dto) {
+//        LambdaQueryWrapper<StockPriceHistory> query = Wrappers.<StockPriceHistory>lambdaQuery()
+//                .eq(StockPriceHistory::getStockId, dto.getId())
+//                .orderByAsc(StockPriceHistory::getNoteDate);
+        QueryWrapper<StockPriceHistory> query = new QueryWrapper<>();
+        query.eq("stock_id", dto.getId())
+                .orderByAsc("note_date");
+        List<StockPriceHistory> rawData = stockPriceHistoryMapper.selectList(query);
+        KLineVO vo = new KLineVO();
+        rawData.forEach(vo::add);
+        return vo;
     }
 }

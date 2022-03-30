@@ -1,5 +1,5 @@
 server:
-  port: 9001
+  port: 8150
   tomcat:
     accesslog:
       enabled: true
@@ -8,7 +8,7 @@ spring:
   application:
     name: api-manager-project
   datasource:
-    url: jdbc:mysql://minnan.site:3306/stock?serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://minnan.site:3306/stock?serverTimezone=Asia/Shanghai&rewriteBatchedStatements=true
     username: Minnan
     password: minnan
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -26,8 +26,13 @@ spring:
 mybatis-plus:
   mapper-locations: /site/minnan/stock/domain/mapper/*.xml
   configuration:
-    #    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
     map-underscore-to-camel-case: true
+
+logging:
+  file:
+    name: ./logs/stock.log
+    max-history: 30
 
 jwt:
   header: Authorization
