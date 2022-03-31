@@ -35,6 +35,7 @@ import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 /**
@@ -89,15 +90,17 @@ public class StockServiceImpl implements StockService {
      * @return
      */
     @Override
-    public List<StockPriceHistory> fetchStockHistory(StockInfo stockInfo, String startDate) {
+    public List<StockPriceHistory> fetchStockHistory(StockInfo stockInfo, String startDate, String endDate) {
         String code = stockInfo.getStockCode();
         Integer stockId = stockInfo.getId();
-        String url = StrUtil.format("{}?token={}&code={}&startDate={}&type=1", PRICE_URL, TOKEN, code, startDate);
+        String url = StrUtil.format("{}?token={}&code={}&startDate={}&endDate={}&type=1", PRICE_URL, TOKEN, code,
+                startDate, endDate);
         HttpResponse response = HttpUtil.createGet(url).execute();
         if (!response.isOk()) {
             return null;
         }
         JSONObject responseJson = JSONUtil.parseObj(response.body());
+        log.info("{}:{}", code, responseJson);
         if (responseJson.getInt("code") != 200) {
             return null;
         }
@@ -125,7 +128,8 @@ public class StockServiceImpl implements StockService {
     @Override
     @Transactional
     public void initStockPrice(StockInfo stockInfo, OutputStream os) throws IOException {
-        List<StockPriceHistory> priceHistoryList = fetchStockHistory(stockInfo, "2021-01-01");
+        String today = DateUtil.today();
+        List<StockPriceHistory> priceHistoryList = fetchStockHistory(stockInfo, "2021-01-01", today);
         if (CollUtil.isEmpty(priceHistoryList)) {
             stockInfo.setDetected(0);
             stockInfoMapper.updateById(stockInfo);
@@ -182,13 +186,13 @@ public class StockServiceImpl implements StockService {
     /**
      * 查询符合条件的股票
      *
-     * @return
      * @param dto
+     * @return
      */
     @Override
     public ListQueryVO<EligibleStockListVO> getEligibleStockList(GetEligibleStockListDTO dto) throws Exception {
         Object lock = redisUtil.getValue("lock");
-        if(lock != null){
+        if (lock != null) {
             throw new Exception("数据统计中");
         }
         Integer totalCount = stockInfoMapper.countEligibleStock(dto);
@@ -216,5 +220,59 @@ public class StockServiceImpl implements StockService {
         KLineVO vo = new KLineVO();
         rawData.forEach(vo::add);
         return vo;
+    }
+
+    /**
+     * 探测请求，探测今日有无开盘
+     *
+     * @param date
+     * @return
+     */
+    @Override
+    public boolean detected(String date) {
+        String url = StrUtil.format("https://api.doctorxiong.club/v1/stock/kline/day?token={}&code=sh000001" +
+                "&startDate={}&endDate={}&type=1", TOKEN, date, date);
+        String responseString = HttpUtil.createGet(url)
+                .execute()
+                .body();
+        JSONObject responseJson = JSONUtil.parseObj(responseString);
+        return responseJson.getInt("code") == 200;
+    }
+
+    /**
+     * 获取需要处理的股票
+     *
+     * @param start 偏移量
+     * @return
+     */
+    @Override
+    public List<StockInfo> getStockList(Integer start) {
+        QueryWrapper<StockInfo> queryWrapper = new QueryWrapper<>();
+        queryWrapper.select("id","stock_code", "stock_nick_code")
+                .eq("detected", 1)
+                .last(" limit " + start + ", 500");
+        return stockInfoMapper.selectList(queryWrapper);
+    }
+
+    /***
+     * 批量添加价格数据
+     * @param stockPriceHistoryList
+     */
+    @Override
+    @Transactional
+    public void saveDailyData(List<StockPriceHistory> stockPriceHistoryList) {
+        stockInfoMapper.insertStockPriceHistoryBatch(stockPriceHistoryList);
+        log.info("success to save history, {} row affected", stockPriceHistoryList.size());
+    }
+
+    /**
+     * 执行统计任务(计算任务
+     *
+     * @param date
+     */
+    @Override
+    @Transactional
+    public void calculate(String date) {
+        stockInfoMapper.callProcedureCalculateAvgPrice(date);
     }
 }

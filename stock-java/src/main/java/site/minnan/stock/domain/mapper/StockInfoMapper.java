@@ -2,6 +2,7 @@ package site.minnan.stock.domain.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Select;
 import org.springframework.stereotype.Repository;
 import site.minnan.stock.domain.aggregate.StockInfo;
 import site.minnan.stock.domain.entity.StockPriceHistory;
@@ -48,4 +49,12 @@ public interface StockInfoMapper extends BaseMapper<StockInfo> {
      * @return
      */
     Integer countEligibleStock(GetEligibleStockListDTO dto);
+
+    /**
+     * 调用存储过程，计算均价涨跌幅等数据
+     *
+     * @param date
+     */
+    @Select("call calculate_avg_price(#{date})")
+    void callProcedureCalculateAvgPrice(String date);
 }

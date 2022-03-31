@@ -1,6 +1,7 @@
 package site.minnan.stock;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.lang.Console;
 import cn.hutool.core.util.ReUtil;
@@ -22,6 +23,7 @@ import site.minnan.stock.domain.aggregate.AuthUser;
 import site.minnan.stock.domain.aggregate.StockInfo;
 import site.minnan.stock.domain.mapper.AuthUserMapper;
 import site.minnan.stock.domain.mapper.StockInfoMapper;
+import site.minnan.stock.infrastructure.schedule.Scheduler;
 import site.minnan.stock.infrastructure.utils.RedisUtil;
 
 import java.io.BufferedOutputStream;
@@ -109,6 +111,13 @@ public class StockTest {
                 .build();
 
         authUserMapper.insert(authUser);
+    }
 
+    @Autowired
+    Scheduler scheduler;
+
+    @Test
+    public void testDailyTask(){
+        scheduler.getTodayPrice();
     }
 }

@@ -16,22 +16,17 @@
     <!--批量添加股票历史价格数据-->
     <insert id="insertStockPriceHistoryBatch">
         insert into stock_price_history
-        (stock_id, start_price, end_price, highest_price, lowest_price, volume, end_price_last, avg_price_past_120_days,
-         avg_price_past_120_days_last, note_date, create_time)
+        (stock_id,stock_code, start_price, end_price, highest_price, lowest_price, volume, note_date, create_time)
         values
         <foreach collection="list" item="item" separator=",">
-            (#{item.startPrice}, #{item.endPrice}, #{item.highestPrice}, #{item.lowestPrice}, #{item.lowestPrice},
-            #{item.volume}, #{item.endPriceLast}, #{item.avgPricePast120Days}, #{item.avgPricePast120DaysLast},
-            #{item.noteDate}, now())
+            (#{item.stockId},#{item.stockCode}, #{item.startPrice}, #{item.endPrice}, #{item.highestPrice},
+            #{item.lowestPrice},#{item.volume},#{item.noteDate}, now())
         </foreach>
         on duplicate key update start_price                  = values(start_price),
                                 end_price                    = values(end_price),
                                 highest_price                = values(highest_price),
                                 lowest_price                 = values(lowest_price),
                                 volume                       = values(volume),
-                                end_price_last               = values(end_price_last),
-                                avg_price_past_120_days      = values(avg_price_past_120_days),
-                                avg_price_past_120_days_last = values(avg_price_past_120_days_last),
                                 create_time                  = now()
     </insert>
 

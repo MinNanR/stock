@@ -67,6 +67,11 @@ public class StockPriceHistory {
     private BigDecimal endPriceLast;
 
     /**
+     * 涨跌幅
+     */
+    private BigDecimal priceDifferRate;
+
+    /**
      * 120天均价
      */
     @TableField("avg_price_past_120_days")

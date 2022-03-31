@@ -40,7 +40,7 @@ public interface StockService {
      * @param startDate 开始日期
      * @return
      */
-    List<StockPriceHistory> fetchStockHistory(StockInfo stockInfo, String startDate);
+    List<StockPriceHistory> fetchStockHistory(StockInfo stockInfo, String startDate, String endDate);
 
     /**
      * 初始化股票价格
@@ -64,4 +64,33 @@ public interface StockService {
      * @return
      */
     KLineVO getKLineData(DetailsQueryDTO dto);
+
+    /**
+     * 探测请求，探测今日有无开盘
+     *
+     * @param date
+     * @return
+     */
+    boolean detected(String date);
+
+    /**
+     * 获取需要处理的股票
+     *
+     * @param start 偏移量
+     * @return
+     */
+    List<StockInfo> getStockList(Integer start);
+
+    /***
+     * 批量添加价格数据
+     * @param stockPriceHistoryList
+     */
+    void saveDailyData(List<StockPriceHistory> stockPriceHistoryList);
+
+    /**
+     * 执行统计任务(计算任务
+     *
+     * @param date
+     */
+    void calculate(String date);
 }
