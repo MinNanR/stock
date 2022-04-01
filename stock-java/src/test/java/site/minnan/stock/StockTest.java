@@ -1,12 +1,10 @@
 package site.minnan.stock;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.lang.Console;
 import cn.hutool.core.util.ReUtil;
 import cn.hutool.crypto.digest.Digester;
-import cn.hutool.crypto.digest.MD5;
 import cn.hutool.http.HttpResponse;
 import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONArray;
@@ -99,15 +97,16 @@ public class StockTest {
 
     @Test
     public void testCreateUser(){
-        String password = "c663b11dff4be0badcf652212a2c1102";
+        String password = "657b298b04e033810343842f993c9817";
         String encodedPassword = passwordEncoder.digestHex(password);
         String uuid = UUID.randomUUID().toString().replaceAll("-", "");
 
+        AuthUser createUser = authUserMapper.selectById(3);
         AuthUser authUser = AuthUser.builder()
-                .username("min")
+                .username("leo")
                 .password(encodedPassword)
                 .passwordStamp(uuid)
-                .realName("民难")
+                .realName("Leo")
                 .build();
 
         authUserMapper.insert(authUser);

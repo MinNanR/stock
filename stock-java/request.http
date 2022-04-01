@@ -1,4 +1,4 @@
-POST http://{{baseUrl}}/stock/auth/login
+POST {{baseUrl}}/stock/auth/login
 Content-Type: application/json
 Accept: application/json
 
@@ -7,7 +7,7 @@ Accept: application/json
   "password": "{{password}}"
 }
 
-> {% client.global.set("token", response.body.data.token) %}
+> {% client.global.set("token", 'Bearer ' + response.body.data.token) %}
 
 
 ###
@@ -34,3 +34,11 @@ Authorization: {{token}}
 {
   "id": 1
 }
+
+###
+POST {{baseUrl}}/stock/statistics/getMarketLimitLine
+Content-Type: application/json
+Accept: application/json
+Authorization: {{token}}
+
+{}

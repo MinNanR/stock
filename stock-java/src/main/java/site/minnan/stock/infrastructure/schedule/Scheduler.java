@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import site.minnan.stock.application.service.StatisticsService;
 import site.minnan.stock.application.service.StockService;
 import site.minnan.stock.domain.aggregate.StockInfo;
 import site.minnan.stock.domain.entity.StockPriceHistory;
@@ -22,11 +23,14 @@ public class Scheduler {
     private StockService stockService;
 
     @Autowired
+    private StatisticsService statisticsService;
+
+    @Autowired
     private RedisUtil redisUtil;
 
     @Scheduled(cron = "30 15 0 * * *")
     public void getTodayPrice() {
-        String today = "2022-03-30";
+        String today = DateUtil.today();
         if (!stockService.detected(today)) {
             log.info("今日未开盘,日期===={}", today);
             return;
@@ -51,6 +55,7 @@ public class Scheduler {
             start = start + 500;
         }
         stockService.calculate(today);
+        statisticsService.marketStatistics(today);
         redisUtil.delete("lock");
     }
 }

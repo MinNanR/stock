@@ -5,6 +5,7 @@ import site.minnan.stock.domain.entity.StockPriceHistory;
 import site.minnan.stock.domain.vo.EligibleStockListVO;
 import site.minnan.stock.domain.vo.KLineVO;
 import site.minnan.stock.domain.vo.ListQueryVO;
+import site.minnan.stock.infrastructure.exception.ProcessingException;
 import site.minnan.stock.userinterface.dto.DetailsQueryDTO;
 import site.minnan.stock.userinterface.dto.GetEligibleStockListDTO;
 
@@ -55,7 +56,7 @@ public interface StockService {
      * @param dto
      * @return
      */
-    ListQueryVO<EligibleStockListVO> getEligibleStockList(GetEligibleStockListDTO dto) throws Exception;
+    ListQueryVO<EligibleStockListVO> getEligibleStockList(GetEligibleStockListDTO dto) throws ProcessingException;
 
     /**
      * 查询K线图数据
@@ -88,7 +89,7 @@ public interface StockService {
     void saveDailyData(List<StockPriceHistory> stockPriceHistoryList);
 
     /**
-     * 执行统计任务(计算任务
+     * 执行统计任务(计算任务)
      *
      * @param date
      */

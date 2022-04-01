@@ -10,9 +10,7 @@ import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,6 +24,7 @@ import site.minnan.stock.domain.mapper.StockPriceHistoryMapper;
 import site.minnan.stock.domain.vo.EligibleStockListVO;
 import site.minnan.stock.domain.vo.KLineVO;
 import site.minnan.stock.domain.vo.ListQueryVO;
+import site.minnan.stock.infrastructure.exception.ProcessingException;
 import site.minnan.stock.infrastructure.utils.RedisUtil;
 import site.minnan.stock.userinterface.dto.DetailsQueryDTO;
 import site.minnan.stock.userinterface.dto.GetEligibleStockListDTO;
@@ -34,8 +33,10 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.*;
-import java.util.function.BiFunction;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
 import java.util.stream.Collectors;
 
 /**
@@ -190,10 +191,10 @@ public class StockServiceImpl implements StockService {
      * @return
      */
     @Override
-    public ListQueryVO<EligibleStockListVO> getEligibleStockList(GetEligibleStockListDTO dto) throws Exception {
+    public ListQueryVO<EligibleStockListVO> getEligibleStockList(GetEligibleStockListDTO dto) throws ProcessingException {
         Object lock = redisUtil.getValue("lock");
         if (lock != null) {
-            throw new Exception("数据统计中");
+            throw new ProcessingException("数据统计中");
         }
         Integer totalCount = stockInfoMapper.countEligibleStock(dto);
         List<EligibleStockListVO> list = totalCount > 0 ?
@@ -266,7 +267,7 @@ public class StockServiceImpl implements StockService {
     }
 
     /**
-     * 执行统计任务(计算任务
+     * 执行统计任务(计算任务)
      *
      * @param date
      */
