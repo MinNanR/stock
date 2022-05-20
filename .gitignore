@@ -1,1 +1,4 @@
 stock-server/__pycache__/
+stock-java/.idea/
+stock-java/target/
+stock-java/logs/
