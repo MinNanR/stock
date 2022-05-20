@@ -1,10 +1,17 @@
 package site.minnan.stock;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.collection.ListUtil;
+import cn.hutool.core.date.DateField;
+import cn.hutool.core.date.DateTime;
+import cn.hutool.core.date.DateUnit;
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.lang.Console;
 import cn.hutool.core.util.ReUtil;
 import cn.hutool.crypto.digest.Digester;
+import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
 import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONArray;
@@ -16,9 +23,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import site.minnan.stock.application.service.StatisticsService;
 import site.minnan.stock.application.service.StockService;
 import site.minnan.stock.domain.aggregate.AuthUser;
 import site.minnan.stock.domain.aggregate.StockInfo;
+import site.minnan.stock.domain.entity.StockPriceHistory;
 import site.minnan.stock.domain.mapper.AuthUserMapper;
 import site.minnan.stock.domain.mapper.StockInfoMapper;
 import site.minnan.stock.infrastructure.schedule.Scheduler;
@@ -26,9 +35,9 @@ import site.minnan.stock.infrastructure.utils.RedisUtil;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @SpringBootTest(classes = StockApplication.class)
 @Slf4j
@@ -45,6 +54,9 @@ public class StockTest {
 
     @Autowired
     RedisUtil redisUtil;
+
+    @Autowired
+    private StatisticsService statisticsService;
 
     @Test
     public void testInitStockInfo() {
@@ -110,6 +122,65 @@ public class StockTest {
                 .build();
 
         authUserMapper.insert(authUser);
+    }
+
+    @Test
+    public void testInitTushareStockInfo(){
+        HttpRequest request = HttpUtil.createPost("http://localhost:8151/getAllStock");
+        HttpResponse response = request.execute();
+        String responseString = response.body();
+        JSONArray stockArray = JSONUtil.parseArray(responseString);
+        Map<Boolean, List<StockInfo>> haveRecord = Stream.iterate(0, i -> i + 1)
+                .limit(stockArray.size())
+                .map(stockArray::getJSONObject)
+                .map(e -> StockInfo.builder()
+                        .stockCode(e.getStr("symbol"))
+                        .stockNickCode(e.getStr("ts_code"))
+                        .stockName(e.getStr("name"))
+                        .build())
+                .collect(Collectors.groupingBy(e -> stockService.updateStockNickCode(e)));
+        List<StockInfo> notInDb = haveRecord.get(false);
+        stockService.addStockBatch(notInDb);
+    }
+
+    @Test
+    public void testUpdatePrice(){
+        stockService.loadStockInfoToRedis();
+        HttpRequest request = HttpUtil.createPost("http://localhost:8151/getAllStock");
+        HttpResponse response = request.execute();
+        String responseString = response.body();
+        JSONArray stockArray = JSONUtil.parseArray(responseString);
+        List<StockInfo> stockInfoList = Stream.iterate(0, i -> i + 1)
+                .limit(stockArray.size())
+                .map(stockArray::getJSONObject)
+                .map(e -> StockInfo.builder()
+                        .stockCode(e.getStr("symbol"))
+                        .stockNickCode(e.getStr("ts_code"))
+                        .stockName(e.getStr("name"))
+                        .build())
+                .collect(Collectors.toList());
+        List<List<StockInfo>> split = CollectionUtil.split(stockInfoList, 300);
+        for (List<StockInfo> list : split) {
+            List<StockPriceHistory> dataToInsert = new ArrayList<>();
+            for (StockInfo stockInfo : list) {
+                List<StockPriceHistory> result = stockService.fetchStockHistory(stockInfo, "20220517", "20220519");
+                if (result != null) {
+                    dataToInsert.addAll(result);
+                }
+            }
+            stockService.saveDailyData(dataToInsert);
+        }
+    }
+
+    @Test
+    public void testCacluate(){
+        DateTime today = DateUtil.beginOfDay(DateTime.now());
+        DateTime date = DateUtil.beginOfYear(today);
+        while (date.isBefore(today)){
+            stockService.calculate(date.toString("yyyy-MM-dd"));
+            statisticsService.marketStatistics(date.toString("yyyy-MM-dd"));
+            date.offset(DateField.DAY_OF_YEAR, 1);
+        }
     }
 
     @Autowired

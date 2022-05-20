@@ -77,10 +77,9 @@ public interface StockService {
     /**
      * 获取需要处理的股票
      *
-     * @param start 偏移量
      * @return
      */
-    List<StockInfo> getStockList(Integer start);
+    List<StockInfo> getStockList();
 
     /***
      * 批量添加价格数据
@@ -94,4 +93,17 @@ public interface StockService {
      * @param date
      */
     void calculate(String date);
+
+    /**
+     * 更新股票代码（更换TS源使用)
+     *
+     * @param stockInfo 股票信息
+     * @return 更新成功返回True, 未找到股票返回False
+     */
+    boolean updateStockNickCode(StockInfo stockInfo);
+
+    /**
+     * 将股票信息加载带redis中（建立代码与id的映射）
+     */
+    void loadStockInfoToRedis();
 }

@@ -41,5 +41,5 @@ jwt:
   authorized: true
 
 stock:
-  priceUrl: https://api.doctorxiong.club/v1/stock/kline/day
+  priceUrl: http://localhost:8151/getStockPriceHistory
   token: LJUjbTGJeO

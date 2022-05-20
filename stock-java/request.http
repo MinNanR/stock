@@ -42,3 +42,27 @@ Accept: application/json
 Authorization: {{token}}
 
 {}
+
+###
+POST http://localhost:8151/getAllStock
+
+###
+POST http://localhost:8151/getStockPriceHistory
+Content-Type: application/json
+
+{
+  "stockNickCode": "000001.SZ",
+  "startDate": "2022-01-01",
+  "endDate": "2022-05-17"
+}
+
+###
+POST http://localhost:8151/dected
+Content-Type: application/json
+
+{
+  "date": "20220517"
+}
+
+###
+GET https://api.doctorxiong.club/v1/stock/kline/day?startDate=2021-01-01&type=1&code=sh000001
