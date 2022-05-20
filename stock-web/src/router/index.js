@@ -15,15 +15,31 @@ const routes = [
         children: [{
             path: "/",
             component: () =>
-                import('../components/page/index.vue')
+                import('../components/page/index.vue'),
+            meta: {
+                index: 1
+            }
         }, {
             path: "/user",
             component: () =>
-                import('../components/page/user.vue')
+                import('../components/page/user.vue'),
+            meta: {
+                index: 1
+            }
         }, {
             path: '/kline',
             name: "KLine",
-            component: () => import('../components/page/kline.vue')
+            component: () => import('../components/page/kline.vue'),
+            meta: {
+                index: 2
+            }
+        }, {
+            path: '/limit',
+            name:"limit",
+            component: () => import('../components/page/limit.vue'),
+            meta:{
+                index :1
+            }
         }]
     }]
 

@@ -28,8 +28,12 @@ export default {
   data() {
     return {
       navList:[{
-        name:"主页",
+        name:"120均线统计",
         url:"/"
+      },
+      {
+        name:"涨跌停统计",
+        url:"/limit"
       },
       {
         name:"用户管理",

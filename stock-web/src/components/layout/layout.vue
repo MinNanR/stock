@@ -9,10 +9,12 @@
       </el-aside>
       <el-main style="padding: 0">
         <div class="main-content">
-          <router-view v-slot="{Component}">
-            <keep-alive include="index">
-              <component :is="Component"></component>
-            </keep-alive>
+          <router-view v-slot="{ Component }">
+            <transition :name="transitionName">
+              <keep-alive include="index">
+                <component :is="Component"></component>
+              </keep-alive>
+            </transition>
           </router-view>
         </div>
       </el-main>
@@ -28,6 +30,22 @@ export default {
   components: {
     sidebar,
     myHeader,
+  },
+  data() {
+    return {
+      transitionName: "",
+    };
+  },
+  watch: {
+    $route(to, from) {
+      console.log(to.meta.index, from.meta.index);
+      if (to.meta.index < from.meta.index) {
+        this.transitionName = "slide-left";
+      } else if (to.meta.index > from.meta.index) {
+        this.transitionName = "slide-right";
+      }
+      console.log(this.transitionName);
+    },
   },
 };
 </script>
@@ -72,5 +90,26 @@ body {
   margin-right: 2%;
   margin-left: 2%;
   margin-top: 20px;
+}
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity .75s ease;
+}
+.fade-enter, .fade-leave-active {
+  opacity: 0;
+}
+.child-view {
+  position: absolute;
+  transition: all .75s cubic-bezier(.55,0,.1,1);
+}
+.slide-left-enter, .slide-right-leave-active {
+  opacity: 0;
+  -webkit-transform: translate(30px, 0);
+  transform: translate(30px, 0);
+}
+.slide-left-leave-active, .slide-right-enter {
+  opacity: 0;
+  -webkit-transform: translate(-30px, 0);
+  transform: translate(-30px, 0);
 }
 </style>
