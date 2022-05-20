@@ -5,12 +5,14 @@ import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
 import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,11 +35,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 股票服务
@@ -93,30 +93,37 @@ public class StockServiceImpl implements StockService {
     @Override
     public List<StockPriceHistory> fetchStockHistory(StockInfo stockInfo, String startDate, String endDate) {
         String code = stockInfo.getStockCode();
-        Integer stockId = stockInfo.getId();
-        String url = StrUtil.format("{}?token={}&code={}&startDate={}&endDate={}&type=1", PRICE_URL, TOKEN, code,
-                startDate, endDate);
-        HttpResponse response = HttpUtil.createGet(url).execute();
+        String stockNickCode = stockInfo.getStockNickCode();
+        Integer id = (Integer) redisUtil.getValue("stock:" + stockNickCode);
+        if(id == null){
+            stockInfoMapper.insert(stockInfo);
+        }
+        int stockId = id == null ? stockInfo.getId() : id;
+//        String url = StrUtil.format("{}?token={}&code={}&startDate={}&endDate={}&type=1", PRICE_URL, TOKEN, code,
+//                startDate, endDate);
+        JSONObject body = new JSONObject();
+        body.putOpt("stockNickCode", stockNickCode)
+                .putOpt("startDate", startDate)
+                .putOpt("endDate", endDate);
+        HttpResponse response = HttpUtil.createPost(PRICE_URL)
+                .body(body.toJSONString(0))
+                .execute();
         if (!response.isOk()) {
             return null;
         }
-        JSONObject responseJson = JSONUtil.parseObj(response.body());
+        JSONArray responseJson = JSONUtil.parseArray(response.body());
         log.info("{}:{}", code, responseJson);
-        if (responseJson.getInt("code") != 200) {
-            return null;
-        }
-        JSONArray data = responseJson.getJSONArray("data");
-        return data.stream()
-                .map(e -> (JSONArray) e)
+        return responseJson.stream()
+                .map(e -> (JSONObject) e)
                 .map(item -> StockPriceHistory.builder()
                         .stockId(stockId)
                         .stockCode(code)
-                        .startPrice(item.getBigDecimal(1))
-                        .endPrice(item.getBigDecimal(2))
-                        .highestPrice(item.getBigDecimal(3))
-                        .lowestPrice(item.getBigDecimal(4))
-                        .volume(NumberUtil.parseInt(item.getStr(5)))
-                        .noteDate(DateUtil.parse(item.getStr(0), "yyyy-MM-dd"))
+                        .startPrice(item.getBigDecimal("open"))
+                        .endPrice(item.getBigDecimal("close"))
+                        .highestPrice(item.getBigDecimal("high"))
+                        .lowestPrice(item.getBigDecimal("low"))
+                        .volume(item.getInt("vol"))
+                        .noteDate(DateUtil.parse(item.getStr("trade_date"), "yyyyMMdd"))
                         .build())
                 .collect(Collectors.toList());
     }
@@ -231,28 +238,42 @@ public class StockServiceImpl implements StockService {
      */
     @Override
     public boolean detected(String date) {
-        String url = StrUtil.format("https://api.doctorxiong.club/v1/stock/kline/day?token={}&code=sh000001" +
-                "&startDate={}&endDate={}&type=1", TOKEN, date, date);
-        String responseString = HttpUtil.createGet(url)
+        String url = StrUtil.format("http://localhost:8151/dected");
+        JSONObject param = new JSONObject();
+        param.putOpt("date", date.replaceAll("-", ""));
+        String responseString = HttpUtil.createPost(url)
+                .body(param.toJSONString(0))
                 .execute()
                 .body();
-        JSONObject responseJson = JSONUtil.parseObj(responseString);
-        return responseJson.getInt("code") == 200;
+        JSONArray response = JSONUtil.parseArray(responseString);
+        return response.getJSONObject(0).getInt("is_open") == 1;
     }
 
     /**
      * 获取需要处理的股票
      *
-     * @param start 偏移量
      * @return
      */
     @Override
-    public List<StockInfo> getStockList(Integer start) {
-        QueryWrapper<StockInfo> queryWrapper = new QueryWrapper<>();
-        queryWrapper.select("id","stock_code", "stock_nick_code")
-                .eq("detected", 1)
-                .last(" limit " + start + ", 500");
-        return stockInfoMapper.selectList(queryWrapper);
+    public List<StockInfo> getStockList() {
+//        QueryWrapper<StockInfo> queryWrapper = new QueryWrapper<>();
+//        queryWrapper.select("id","stock_code", "stock_nick_code")
+//                .eq("detected", 1)
+//                .last(" limit " + start + ", 500");
+//        return stockInfoMapper.selectList(queryWrapper);
+        HttpRequest request = HttpUtil.createPost("http://localhost:8151/getAllStock");
+        HttpResponse response = request.execute();
+        String responseString = response.body();
+        JSONArray stockArray = JSONUtil.parseArray(responseString);
+        return Stream.iterate(0, i -> i + 1)
+                .limit(stockArray.size())
+                .map(stockArray::getJSONObject)
+                .map(e -> StockInfo.builder()
+                        .stockCode(e.getStr("symbol"))
+                        .stockNickCode(e.getStr("ts_code"))
+                        .stockName(e.getStr("name"))
+                        .build())
+                .collect(Collectors.toList());
     }
 
     /***
@@ -275,5 +296,28 @@ public class StockServiceImpl implements StockService {
     @Transactional
     public void calculate(String date) {
         stockInfoMapper.callProcedureCalculateAvgPrice(date);
+    }
+
+    @Override
+    @Transactional
+    public boolean updateStockNickCode(StockInfo stockInfo) {
+        QueryWrapper<StockInfo> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("stock_code", stockInfo.getStockCode());
+        StockInfo stock = stockInfoMapper.selectOne(queryWrapper);
+        if(stock == null){
+            return false;
+        }
+        stock.setStockNickCode(stockInfo.getStockNickCode());
+        stockInfoMapper.updateById(stock);
+        return true;
+
+    }
+
+    @Override
+    public void loadStockInfoToRedis() {
+        List<StockInfo> allStock = stockInfoMapper.selectList(null);
+        for (StockInfo e : allStock) {
+            redisUtil.valueSet("stock:" + e.getStockNickCode(), e.getId());
+        }
     }
 }
