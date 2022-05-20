@@ -16,18 +16,23 @@
     <!--批量添加股票历史价格数据-->
     <insert id="insertStockPriceHistoryBatch">
         insert into stock_price_history
-        (stock_id,stock_code, start_price, end_price, highest_price, lowest_price, volume, note_date, create_time)
+        (stock_id,stock_code, start_price, end_price, highest_price, lowest_price, volume, note_date, create_time,
+        price_differ_rate, avg_price_past_120_days, tag)
         values
         <foreach collection="list" item="item" separator=",">
             (#{item.stockId},#{item.stockCode}, #{item.startPrice}, #{item.endPrice}, #{item.highestPrice},
-            #{item.lowestPrice},#{item.volume},#{item.noteDate}, now())
+            #{item.lowestPrice},#{item.volume},#{item.noteDate}, now(), #{item.priceDifferRate},
+            #{item.avgPricePast120Days},#{item.tag})
         </foreach>
         on duplicate key update start_price                  = values(start_price),
                                 end_price                    = values(end_price),
                                 highest_price                = values(highest_price),
                                 lowest_price                 = values(lowest_price),
                                 volume                       = values(volume),
-                                create_time                  = now()
+                                create_time                  = now(),
+                                price_differ_rate            = values(price_differ_rate),
+                                avg_price_past_120_days      = values(avg_price_past_120_days),
+                                tag                          = values(tag)
     </insert>
 
     <!--查询符合条件的股票-->

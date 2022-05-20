@@ -35,6 +35,8 @@ import site.minnan.stock.infrastructure.utils.RedisUtil;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -108,7 +110,7 @@ public class StockTest {
     private Digester passwordEncoder;
 
     @Test
-    public void testCreateUser(){
+    public void testCreateUser() {
         String password = "657b298b04e033810343842f993c9817";
         String encodedPassword = passwordEncoder.digestHex(password);
         String uuid = UUID.randomUUID().toString().replaceAll("-", "");
@@ -125,7 +127,7 @@ public class StockTest {
     }
 
     @Test
-    public void testInitTushareStockInfo(){
+    public void testInitTushareStockInfo() {
         HttpRequest request = HttpUtil.createPost("http://localhost:8151/getAllStock");
         HttpResponse response = request.execute();
         String responseString = response.body();
@@ -144,7 +146,7 @@ public class StockTest {
     }
 
     @Test
-    public void testUpdatePrice(){
+    public void testUpdatePrice() {
         stockService.loadStockInfoToRedis();
         HttpRequest request = HttpUtil.createPost("http://localhost:8151/getAllStock");
         HttpResponse response = request.execute();
@@ -173,10 +175,10 @@ public class StockTest {
     }
 
     @Test
-    public void testCacluate(){
+    public void testCaculate() {
         DateTime today = DateUtil.beginOfDay(DateTime.now());
         DateTime date = DateUtil.beginOfYear(today);
-        while (date.isBefore(today)){
+        while (date.isBefore(today)) {
             stockService.calculate(date.toString("yyyy-MM-dd"));
             statisticsService.marketStatistics(date.toString("yyyy-MM-dd"));
             date.offset(DateField.DAY_OF_YEAR, 1);
@@ -187,7 +189,71 @@ public class StockTest {
     Scheduler scheduler;
 
     @Test
-    public void testDailyTask(){
+    public void testDailyTask() {
         scheduler.getTodayPrice();
+    }
+
+    @Test
+    public void testWashData() {
+        List<StockInfo> stockList = stockService.getStockList();
+        List<StockPriceHistory> dataToInsert = new ArrayList<>();
+
+        BigDecimal surgedUp = new BigDecimal("0.101");
+        BigDecimal surgedDown = new BigDecimal("0.098");
+        BigDecimal declineUp = new BigDecimal("-0.098");
+        BigDecimal declineDown = new BigDecimal("-0.101");
+
+        for (StockInfo stockInfo : stockList) {
+            List<StockPriceHistory> priceList = stockService.fetchStockHistory(stockInfo, "20050101",
+                    "20220520");
+
+            int size = priceList.size();
+            for (int i = 0; i < size - 1; i++) {
+                int tag = 0;
+                StockPriceHistory current = priceList.get(i);
+                StockPriceHistory last = priceList.get(i + 1);
+
+                BigDecimal priceDifferRate = current.getPriceDifferRate();
+                if (surgedDown.compareTo(priceDifferRate) < 0 && surgedUp.compareTo(priceDifferRate) > 0) {
+                    tag = tag | (1 << 1);
+                } else if (declineDown.compareTo(priceDifferRate) < 0 && declineUp.compareTo(priceDifferRate) > 0) {
+                    tag = tag | (1 << 2);
+                }
+
+                BigDecimal avgPricePast120Days = current.getAvgPricePast120Days();
+                BigDecimal avgPricePast120DaysLast = last.getAvgPricePast120Days();
+                if (avgPricePast120Days != null && avgPricePast120DaysLast != null) {
+                    BigDecimal endPrice = current.getEndPrice();
+                    if (endPrice.compareTo(avgPricePast120DaysLast) < 0 && endPrice.compareTo(avgPricePast120Days) > 0) {
+                        tag = tag | 1;
+                    }
+                }
+
+                if (tag != 0) {
+                    current.setTag(tag);
+                    dataToInsert.add(current);
+                }
+            }
+
+            int tag = 0;
+            StockPriceHistory lastItem = priceList.get(size - 1);
+            BigDecimal priceDifferRate = lastItem.getPriceDifferRate();
+            if (surgedDown.compareTo(priceDifferRate) > 0 && surgedUp.compareTo(priceDifferRate) <= 0) {
+                tag = tag | (1 << 1);
+            } else if (declineDown.compareTo(priceDifferRate) > 0 && declineUp.compareTo(priceDifferRate) <= 0) {
+                tag = tag | (1 << 2);
+            }
+            if (tag != 0) {
+                lastItem.setTag(tag);
+                dataToInsert.add(lastItem);
+            }
+
+            if (dataToInsert.size() > 800) {
+                stockService.saveDailyData(dataToInsert);
+                dataToInsert = new ArrayList<>();
+            }
+        }
+
+
     }
 }

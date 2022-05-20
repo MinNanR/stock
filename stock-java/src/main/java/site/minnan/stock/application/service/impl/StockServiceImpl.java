@@ -112,7 +112,8 @@ public class StockServiceImpl implements StockService {
             return null;
         }
         JSONArray responseJson = JSONUtil.parseArray(response.body());
-        log.info("{}:{}", code, responseJson);
+        log.info("{}:获取到{}条数据", code, responseJson.size());
+        BigDecimal percent = new BigDecimal("0.01");
         return responseJson.stream()
                 .map(e -> (JSONObject) e)
                 .map(item -> StockPriceHistory.builder()
@@ -124,6 +125,8 @@ public class StockServiceImpl implements StockService {
                         .lowestPrice(item.getBigDecimal("low"))
                         .volume(item.getInt("vol"))
                         .noteDate(DateUtil.parse(item.getStr("trade_date"), "yyyyMMdd"))
+                        .priceDifferRate(item.getBigDecimal("pct_chg").multiply(percent))
+                        .avgPricePast120Days(item.getBigDecimal("ma120"))
                         .build())
                 .collect(Collectors.toList());
     }

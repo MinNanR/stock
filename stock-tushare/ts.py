@@ -23,17 +23,11 @@ def get_all_stock():
 
 def get_stock_price(ts_code, start_date, end_date):
     data = ts.pro_bar(ts_code=ts_code, api=pro, start_date=start_date,
-                      end_date=end_date, adj="qfq", freq="D")
-    d = data.sort_values(by=["trade_date"])
-    return d.to_json(None, orient="records", date_format="yyyy-MM-dd")
+                      end_date=end_date, adj="qfq", freq="D", ma=[120])
+    # d = data.sort_values(by=["trade_date"])
+    return data.to_json(None, orient="records", date_format="yyyy-MM-dd")
 
 
 def dected(date):
     dected = pro.trade_cal(exchange='', start_date=date, end_date=date)
     return dected.to_json(None, orient="records", date_format="yyyy-MM-dd")
-
-
-if __name__ == '__main__':
-    data = ts.pro_bar(ts_code='300801.SZ', api=pro, start_date='20210101',
-                      end_date='20220520', adj="qfq", freq="D", ma=[120])
-    data.to_json("300801.json", orient="records", date_format="yyyy-MM-dd")

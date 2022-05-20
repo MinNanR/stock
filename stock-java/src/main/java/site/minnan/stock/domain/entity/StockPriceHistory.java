@@ -92,4 +92,12 @@ public class StockPriceHistory {
      * 入库时间
      */
     private Timestamp createTime;
+
+    /**
+     * 记录标记，
+     * 001 | tag = 1 表示为符合均线条件数据
+     * 010 | tag = 1 表示涨停数据
+     * 100 | tag = 1 表示跌停数据
+     */
+    private Integer tag;
 }
