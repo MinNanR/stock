@@ -125,7 +125,8 @@ public class StockServiceImpl implements StockService {
                         .lowestPrice(item.getBigDecimal("low"))
                         .volume(item.getInt("vol"))
                         .noteDate(DateUtil.parse(item.getStr("trade_date"), "yyyyMMdd"))
-                        .priceDifferRate(item.getBigDecimal("pct_chg").multiply(percent))
+                        .priceDifferRate(item.getBigDecimal("pct_chg") != null ? item.getBigDecimal("pct_chg").multiply(percent) :
+                                BigDecimal.ZERO)
                         .avgPricePast120Days(item.getBigDecimal("ma120"))
                         .build())
                 .collect(Collectors.toList());

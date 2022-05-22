@@ -57,7 +57,7 @@ public class StatisticsServiceImpl implements StatisticsService {
         }
         List<MarketStatistics> list = marketStatisticsMapper.selectAll();
         MarketLimitLineVO vo = new MarketLimitLineVO();
-        String marketDataUrl = "https://api.doctorxiong.club/v1/stock/kline/day?startDate=2021-01-01&type=1&code=sh000001";
+        String marketDataUrl = "https://api.doctorxiong.club/v1/stock/kline/day?startDate=2005-01-01&type=1&code=sh000001";
         HttpResponse response = HttpUtil.createGet(marketDataUrl).execute();
         String responseString = response.body();
         JSONObject responseJson = JSONUtil.parseObj(responseString);

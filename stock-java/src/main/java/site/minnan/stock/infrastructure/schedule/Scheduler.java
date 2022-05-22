@@ -36,7 +36,7 @@ public class Scheduler {
     @Autowired
     private RedisUtil redisUtil;
 
-    @Scheduled(cron = "30 15 0 * * *")
+//    @Scheduled(cron = "30 15 0 * * *")
     public void getTodayPrice() {
         String today = DateUtil.today().replaceAll("-", "");
         if (!stockService.detected(today)) {

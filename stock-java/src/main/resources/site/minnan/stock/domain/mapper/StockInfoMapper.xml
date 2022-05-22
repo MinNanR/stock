@@ -43,8 +43,7 @@
         from stock_price_history t1
             left join stock_info t2 on t1.stock_id = t2.id
         where note_date = #{noteDate}
-            and t1.end_price_last &lt; t1.avg_price_past_120_days_last
-            and t1.end_price &gt; t1.avg_price_past_120_days
+            and tag &amp; 1 = 1
         limit #{start}, #{pageSize}
     </select>
 
@@ -54,7 +53,6 @@
         from stock_price_history t1
             left join stock_info t2 on t1.stock_id = t2.id
         where note_date = #{noteDate}
-            and t1.end_price_last &lt; t1.avg_price_past_120_days_last
-            and t1.end_price &gt; t1.avg_price_past_120_days
+            and tag &amp; 1 = 1
     </select>
 </mapper>

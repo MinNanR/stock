@@ -1,5 +1,3 @@
-from dis import code_info
-from os import openpty
 from pandas import DataFrame
 import tushare as ts
 
@@ -31,3 +29,9 @@ def get_stock_price(ts_code, start_date, end_date):
 def dected(date):
     dected = pro.trade_cal(exchange='', start_date=date, end_date=date)
     return dected.to_json(None, orient="records", date_format="yyyy-MM-dd")
+
+
+if __name__ == '__main__':
+    data = ts.pro_bar(ts_code="600601.SH", api=pro, start_date="20210101",
+                      end_date="20220520", adj="qfq", freq="D", ma=[120])
+    print(data)

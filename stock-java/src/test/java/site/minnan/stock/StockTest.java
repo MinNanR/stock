@@ -30,6 +30,7 @@ import site.minnan.stock.domain.aggregate.StockInfo;
 import site.minnan.stock.domain.entity.StockPriceHistory;
 import site.minnan.stock.domain.mapper.AuthUserMapper;
 import site.minnan.stock.domain.mapper.StockInfoMapper;
+import site.minnan.stock.domain.mapper.StockPriceHistoryMapper;
 import site.minnan.stock.infrastructure.schedule.Scheduler;
 import site.minnan.stock.infrastructure.utils.RedisUtil;
 
@@ -56,6 +57,9 @@ public class StockTest {
 
     @Autowired
     RedisUtil redisUtil;
+
+    @Autowired
+    StockPriceHistoryMapper priceHistoryMapper;
 
     @Autowired
     private StatisticsService statisticsService;
@@ -196,6 +200,9 @@ public class StockTest {
     @Test
     public void testWashData() {
         List<StockInfo> stockList = stockService.getStockList();
+        List<String> existStock = priceHistoryMapper.getExistStock();
+        stockList.removeIf(e -> existStock.contains(e.getStockCode()));
+
         List<StockPriceHistory> dataToInsert = new ArrayList<>();
 
         BigDecimal surgedUp = new BigDecimal("0.101");
@@ -208,6 +215,9 @@ public class StockTest {
                     "20220520");
 
             int size = priceList.size();
+            if(size == 0 ){
+                continue;
+            }
             for (int i = 0; i < size - 1; i++) {
                 int tag = 0;
                 StockPriceHistory current = priceList.get(i);
@@ -224,7 +234,8 @@ public class StockTest {
                 BigDecimal avgPricePast120DaysLast = last.getAvgPricePast120Days();
                 if (avgPricePast120Days != null && avgPricePast120DaysLast != null) {
                     BigDecimal endPrice = current.getEndPrice();
-                    if (endPrice.compareTo(avgPricePast120DaysLast) < 0 && endPrice.compareTo(avgPricePast120Days) > 0) {
+                    BigDecimal endPriceLast = last.getEndPrice();
+                    if (endPriceLast.compareTo(avgPricePast120DaysLast) < 0 && endPrice.compareTo(avgPricePast120Days) > 0) {
                         tag = tag | 1;
                     }
                 }
