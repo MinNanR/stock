@@ -1,17 +1,20 @@
 <template>
   <div>
-    <div style="display: flex; flex-direction:row;align-items: center">
-      <el-button type="primary" style="font-size: 18px;" @click="turnBack()">后退</el-button>
-      <div style="margin-left :30px;font-size:18px;">{{stockName}} : {{stockCode}}</div>
+    <div style="display: flex; flex-direction: row; align-items: center">
+      <el-button type="primary" style="font-size: 18px" @click="turnBack()"
+        >后退</el-button
+      >
+      <div style="margin-left: 30px; font-size: 18px">
+        {{ stockName }} : {{ stockCode }}
+      </div>
     </div>
-    <div id="charts" style="margin-top: 30px;">
+    <div id="charts" style="margin-top: 30px">
       <div id="myChart" style="width: 80vw; height: 600px"></div>
     </div>
   </div>
 </template>
 
 <script>
-
 export default {
   data() {
     return {
@@ -23,7 +26,7 @@ export default {
   methods: {
     drawChart(data) {
       // 基于准备好的dom，初始化echarts实例【这里存在一个问题，请看到最后】
-      let chart = this.$echarts.init(document.getElementById("myChart"))
+      let chart = this.$echarts.init(document.getElementById("myChart"));
       // 指定图表的配置项和数据
       let option = {
         legend: {
@@ -56,6 +59,11 @@ export default {
           bottom: 80,
         },
         dataZoom: [
+          {
+            type: "inside",
+            start: 90,
+            end: 100,
+          },
           {
             textStyle: {
               color: "#8392A5",
@@ -105,7 +113,7 @@ export default {
       };
       // 使用刚指定的配置项和数据显示图表。
       chart.setOption(option);
-      document.getElementById("myChart").removeAttribute("_echarts_instance_")
+      document.getElementById("myChart").removeAttribute("_echarts_instance_");
     },
     getData() {
       this.request.post("/getKLineData", { id: this.id }).then((response) => {
@@ -113,9 +121,9 @@ export default {
         this.drawChart(data);
       });
     },
-    turnBack(){
-      this.$router.go(-1)
-    }
+    turnBack() {
+      this.$router.go(-1);
+    },
   },
   mounted() {
     let id = this.$route.params.id;

@@ -20,8 +20,11 @@ public class ControllerLog {
     private void controllerLog() {
     }
 
+    @Pointcut("execution(public * site.minnan.stock.userinterface.fascade.StatisticsController.getMarketLimitLine(..))")
+    private void controllerUnlog(){}
 
-    @Around("controllerLog()")
+
+    @Around("controllerLog() && !controllerUnlog()")
     public Object logAroundController(ProceedingJoinPoint proceedingJoinPoint) throws Throwable {
         long time = System.currentTimeMillis();
         Object[] args = proceedingJoinPoint.getArgs();

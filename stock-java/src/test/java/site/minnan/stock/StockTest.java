@@ -200,8 +200,11 @@ public class StockTest {
     @Test
     public void testWashData() {
         List<StockInfo> stockList = stockService.getStockList();
-        List<String> existStock = priceHistoryMapper.getExistStock();
-        stockList.removeIf(e -> existStock.contains(e.getStockCode()));
+        Optional<StockInfo> opt = stockList.stream().filter(e -> e.getStockCode().equals("688286")).findFirst();
+        if (opt.isPresent()) {
+            int i = stockList.indexOf(opt.get());
+            stockList = stockList.subList(i, stockList.size());
+        }
 
         List<StockPriceHistory> dataToInsert = new ArrayList<>();
 
@@ -212,7 +215,7 @@ public class StockTest {
 
         for (StockInfo stockInfo : stockList) {
             List<StockPriceHistory> priceList = stockService.fetchStockHistory(stockInfo, "20050101",
-                    "20220520");
+                    "20220524");
 
             int size = priceList.size();
             if(size == 0 ){
@@ -265,6 +268,8 @@ public class StockTest {
             }
         }
 
-
+        if(dataToInsert.size() > 0){
+            stockService.saveDailyData(dataToInsert);
+        }
     }
 }

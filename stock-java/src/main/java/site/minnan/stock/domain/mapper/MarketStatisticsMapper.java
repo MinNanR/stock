@@ -6,6 +6,7 @@ import org.apache.ibatis.annotations.Select;
 import org.springframework.stereotype.Repository;
 import site.minnan.stock.domain.entity.MarketStatistics;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -23,4 +24,7 @@ public interface MarketStatisticsMapper extends BaseMapper<MarketStatistics> {
     @Select("select id id, note_date noteDate, surged_limit_count surgedLimitCount, decline_limit_count " +
             "declineLimitCount from market_statistics order by note_date;")
     List<MarketStatistics> selectAll();
+
+    @Select("select cal_date from trade_date where cal_date <= curdate() order by cal_date desc limit 130")
+    List<Date> getTradeDatePast120();
 }

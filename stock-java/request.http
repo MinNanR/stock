@@ -32,7 +32,7 @@ Accept: application/json
 Authorization: {{token}}
 
 {
-  "id": 1
+  "id": 78
 }
 
 ###
@@ -66,3 +66,6 @@ Content-Type: application/json
 
 ###
 GET https://api.doctorxiong.club/v1/stock/kline/day?startDate=2021-01-01&type=1&code=sh000001
+
+###
+GET https://api.doctorxiong.club/v1/stock/index/all

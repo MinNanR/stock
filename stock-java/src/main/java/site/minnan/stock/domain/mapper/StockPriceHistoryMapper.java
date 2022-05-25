@@ -17,6 +17,6 @@ import java.util.List;
 @Mapper
 public interface StockPriceHistoryMapper extends BaseMapper<StockPriceHistory> {
 
-    @Select("select distinct stock_code from stock_price_history")
+    @Select("select distinct stock_code from stock_price_history where note_date = '2022-05-24'")
     List<String> getExistStock();
 }

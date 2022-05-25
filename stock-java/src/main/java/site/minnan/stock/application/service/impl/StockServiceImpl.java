@@ -225,12 +225,18 @@ public class StockServiceImpl implements StockService {
 //        LambdaQueryWrapper<StockPriceHistory> query = Wrappers.<StockPriceHistory>lambdaQuery()
 //                .eq(StockPriceHistory::getStockId, dto.getId())
 //                .orderByAsc(StockPriceHistory::getNoteDate);
-        QueryWrapper<StockPriceHistory> query = new QueryWrapper<>();
-        query.eq("stock_id", dto.getId())
-                .orderByAsc("note_date");
-        List<StockPriceHistory> rawData = stockPriceHistoryMapper.selectList(query);
+//        QueryWrapper<StockPriceHistory> query = new QueryWrapper<>();
+//        query.eq("stock_id", dto.getId())
+//                .orderByAsc("note_date");
+//        List<StockPriceHistory> rawData = stockPriceHistoryMapper.selectList(query);
+//        KLineVO vo = new KLineVO();
+//        rawData.forEach(vo::add);
+        StockInfo info = stockInfoMapper.selectById(dto.getId());
+        String today = DateUtil.format(new Date(), "yyyyMMdd");
+        List<StockPriceHistory> priceList = fetchStockHistory(info, "20050101", today);
+        ListUtil.reverse(priceList);
         KLineVO vo = new KLineVO();
-        rawData.forEach(vo::add);
+        priceList.forEach(vo::add);
         return vo;
     }
 

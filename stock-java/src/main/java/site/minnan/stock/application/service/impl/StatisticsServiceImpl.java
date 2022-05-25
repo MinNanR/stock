@@ -17,6 +17,7 @@ import site.minnan.stock.infrastructure.exception.ProcessingException;
 import site.minnan.stock.infrastructure.utils.RedisUtil;
 
 import java.math.BigDecimal;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -57,15 +58,38 @@ public class StatisticsServiceImpl implements StatisticsService {
         }
         List<MarketStatistics> list = marketStatisticsMapper.selectAll();
         MarketLimitLineVO vo = new MarketLimitLineVO();
-        String marketDataUrl = "https://api.doctorxiong.club/v1/stock/kline/day?startDate=2005-01-01&type=1&code=sh000001";
+
+        Map<String, BigDecimal> sh000001 = getMarketLineData("sh000001");
+        Map<String, BigDecimal> sh000016 = getMarketLineData("sh000016");
+        Map<String, BigDecimal> sh000905 = getMarketLineData("sh000905");
+        Map<String, BigDecimal> sz399300 = getMarketLineData("sz399300");
+
+        list.forEach(e -> {
+            String noteDate = DateUtil.format(e.getNoteDate(), "yyyy-MM-dd");
+            vo.add(e, sh000001.get(noteDate), sh000016.get(noteDate), sh000905.get(noteDate), sz399300.get(noteDate));
+        });
+
+        return vo;
+    }
+
+    private Map<String, BigDecimal> getMarketLineData(String code){
+        String marketDataUrl = "https://api.doctorxiong.club/v1/stock/kline/day?startDate=2005-01-01&type=1&code=" + code;
         HttpResponse response = HttpUtil.createGet(marketDataUrl).execute();
         String responseString = response.body();
         JSONObject responseJson = JSONUtil.parseObj(responseString);
         JSONArray data = responseJson.getJSONArray("data");
-        Map<String, BigDecimal> dateMarketMap = data.stream()
+        return data.stream()
                 .map(e -> (JSONArray) e)
                 .collect(Collectors.toMap(e -> e.getStr(0), e -> e.getBigDecimal(2)));
-        list.forEach(e -> vo.add(e, dateMarketMap.get(DateUtil.format(e.getNoteDate(), "yyyy-MM-dd"))));
-        return vo;
+    }
+
+    /**
+     * 获取过去120个交易日
+     *
+     * @return
+     */
+    @Override
+    public List<Date> getTradeDateListPast120() {
+        return marketStatisticsMapper.getTradeDatePast120();
     }
 }

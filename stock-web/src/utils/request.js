@@ -37,6 +37,10 @@ request.interceptors.response.use(
                     localStorage.setItem("stock-token", `Bearer ${response.headers.newtoken}`);
                 }
                 return { data: data.data, message: data.message }
+            } else if (data.code === '002') {
+                localStorage.removeItem("stock-token")
+                alert(data.message)
+                router.push("/login")
             } else {
                 return Promise.reject(data.message)
             }

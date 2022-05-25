@@ -3,6 +3,9 @@ package site.minnan.stock.application.service;
 import site.minnan.stock.domain.vo.MarketLimitLineVO;
 import site.minnan.stock.infrastructure.exception.ProcessingException;
 
+import java.util.Date;
+import java.util.List;
+
 /**
  * 统计类service
  *
@@ -23,4 +26,11 @@ public interface StatisticsService {
      * @return
      */
     MarketLimitLineVO getMarketLimitData() throws ProcessingException;
+
+    /**
+     * 获取过去120个交易日
+     *
+     * @return
+     */
+    List<Date> getTradeDateListPast120();
 }

@@ -26,7 +26,7 @@ export default {
       // 指定图表的配置项和数据
       let option = {
         legend: {
-          data: ["涨停数量", "跌停数量", "差值","大盘指数"],
+          data: ["涨停数量", "跌停数量", "差值", "上证指数","上证50", "中证500", "沪深300"],
           inactiveColor: "#777",
         },
         tooltip: {
@@ -63,6 +63,11 @@ export default {
         },
         dataZoom: [
           {
+            type: "inside",
+            start: 90,
+            end: 100,
+          },
+          {
             textStyle: {
               color: "#8392A5",
             },
@@ -92,7 +97,7 @@ export default {
             lineStyle: {
               width: 1,
             },
-            yAxisIndex: 0
+            yAxisIndex: 0,
           },
           {
             type: "line",
@@ -103,7 +108,7 @@ export default {
             lineStyle: {
               width: 1,
             },
-            yAxisIndex: 0
+            yAxisIndex: 0,
           },
           {
             type: "line",
@@ -114,21 +119,54 @@ export default {
             lineStyle: {
               width: 1,
             },
-            yAxisIndex: 0
+            yAxisIndex: 0,
           },
           {
             type: "line",
-            name: "大盘指数",
-            data: data.marketLineData,
+            name: "上证指数",
+            data: data.sh000001,
             smooth: this.smooth,
             showSymbol: false,
             lineStyle: {
               width: 1,
             },
-            yAxisIndex: 1
+            yAxisIndex: 1,
+          },
+          {
+            type: "line",
+            name: "上证50",
+            data: data.sh000016,
+            smooth: this.smooth,
+            showSymbol: false,
+            lineStyle: {
+              width: 1,
+            },
+            yAxisIndex: 1,
+          },
+          {
+            type: "line",
+            name: "中证500",
+            data: data.sh000905,
+            smooth: this.smooth,
+            showSymbol: false,
+            lineStyle: {
+              width: 1,
+            },
+            yAxisIndex: 1,
+          },
+          {
+            type: "line",
+            name: "沪深300",
+            data: data.sz399300,
+            smooth: this.smooth,
+            showSymbol: false,
+            lineStyle: {
+              width: 1,
+            },
+            yAxisIndex: 1,
           },
         ],
-        color: ["#c87183", "#8ae7e3", "#0000ff", "#D2691E"],
+        // color: ["#c87183", "#8ae7e3", "#0000ff", "#D2691E"],
       };
       // 使用刚指定的配置项和数据显示图表。
       chart.setOption(option);

@@ -32,18 +32,19 @@ public class KLineVO {
      */
     List<String> dates;
 
-    public void add(StockPriceHistory history){
+    public void add(StockPriceHistory history) {
         String startPrice = history.getStartPrice().toString();
         String endPrice = history.getEndPrice().toString();
         String lowestPrice = history.getLowestPrice().toString();
         String highestPrice = history.getHighestPrice().toString();
-        candlestickChartList.add(new String[]{startPrice,endPrice, lowestPrice, highestPrice});
-        String avgPricePast120Days = Optional.ofNullable(history.getAvgPricePast120Days()).map(BigDecimal::toString).orElse(null);
+        candlestickChartList.add(new String[]{startPrice, endPrice, lowestPrice, highestPrice});
+        String avgPricePast120Days =
+                Optional.ofNullable(history.getAvgPricePast120Days()).map(BigDecimal::toString).orElse(null);
         avgLineData.add(avgPricePast120Days);
         dates.add(DateUtil.format(history.getNoteDate(), "yyyy-MM-dd"));
     }
 
-    public KLineVO(){
+    public KLineVO() {
         this.candlestickChartList = new ArrayList<>();
         this.avgLineData = new ArrayList<>();
         this.dates = new ArrayList<>();
