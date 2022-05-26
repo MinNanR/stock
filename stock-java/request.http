@@ -32,7 +32,7 @@ Accept: application/json
 Authorization: {{token}}
 
 {
-  "id": 78
+  "id": 2264
 }
 
 ###
@@ -51,9 +51,9 @@ POST http://localhost:8151/getStockPriceHistory
 Content-Type: application/json
 
 {
-  "stockNickCode": "000001.SZ",
-  "startDate": "2022-01-01",
-  "endDate": "2022-05-17"
+  "stockNickCode": "000546.SZ",
+  "startDate": "2021-11-10",
+  "endDate": "2022-05-25"
 }
 
 ###

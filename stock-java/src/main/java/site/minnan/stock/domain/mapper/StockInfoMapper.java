@@ -33,6 +33,12 @@ public interface StockInfoMapper extends BaseMapper<StockInfo> {
      */
     int insertStockPriceHistoryBatch(List<StockPriceHistory> list);
 
+    /**
+     * 插入单条历史数据
+     * @param stockPriceHistory
+     */
+    void insertStockPriceHistory(StockPriceHistory stockPriceHistory);
+
 
     /**
      * 查询符合条件的股票参数

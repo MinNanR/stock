@@ -35,6 +35,25 @@
                                 tag                          = values(tag)
     </insert>
 
+    <!--插入单条历史数据-->
+    <insert id="insertStockPriceHistory">
+        insert into stock_price_history
+        (stock_id,stock_code, start_price, end_price, highest_price, lowest_price, volume, note_date, create_time,
+        price_differ_rate, avg_price_past_120_days, tag)
+        values
+        (#{stockId},#{stockCode}, #{startPrice}, #{endPrice}, #{highestPrice},#{lowestPrice},#{volume},#{noteDate},
+         now(), #{priceDifferRate}, #{avgPricePast120Days},#{tag})
+         on duplicate key update start_price                 = values(start_price),
+                                end_price                    = values(end_price),
+                                highest_price                = values(highest_price),
+                                lowest_price                 = values(lowest_price),
+                                volume                       = values(volume),
+                                create_time                  = now(),
+                                price_differ_rate            = values(price_differ_rate),
+                                avg_price_past_120_days      = values(avg_price_past_120_days),
+                                tag                          = values(tag)
+    </insert>
+
     <!--查询符合条件的股票-->
     <select id="getEligibleStockList" resultType="site.minnan.stock.domain.vo.EligibleStockListVO">
         select t1.id id, t1.stock_id, t2.stock_code stockCode, t2.stock_name stockName,

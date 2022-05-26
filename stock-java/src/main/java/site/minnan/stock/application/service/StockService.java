@@ -88,6 +88,13 @@ public interface StockService {
     void saveDailyData(List<StockPriceHistory> stockPriceHistoryList);
 
     /**
+     * 插入单条每日数据
+     *
+     * @param stockPriceHistory
+     */
+    void saveSingleDailyData(StockPriceHistory stockPriceHistory);
+
+    /**
      * 执行统计任务(计算任务)
      *
      * @param date

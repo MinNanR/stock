@@ -330,4 +330,16 @@ public class StockServiceImpl implements StockService {
             redisUtil.valueSet("stock:" + e.getStockNickCode(), e.getId());
         }
     }
+
+    /**
+     * 插入单条每日数据
+     *
+     * @param stockPriceHistory
+     */
+    @Override
+    @Transactional
+    public void saveSingleDailyData(StockPriceHistory stockPriceHistory) {
+        stockInfoMapper.insertStockPriceHistory(stockPriceHistory);
+        log.info("成功插入数据:{}", JSONUtil.toJsonStr(stockPriceHistory));
+    }
 }
