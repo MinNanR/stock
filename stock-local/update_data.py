@@ -5,6 +5,7 @@ import pandas as pd
 import tushare as ts
 import json
 import requests
+import time
 
 
 datasource = {
@@ -63,6 +64,9 @@ def tag_item(item):
 def handle_single_stock(ts_code, start_date, end_date):
     price_list = ts.pro_bar(ts_code=ts_code, api=pro, start_date=start_date,
                             end_date=end_date, adj="qfq", freq="D", ma=[120])
+    if price_list is None:
+        return
+
     data_size = len(price_list)
     print(ts_code + ":收集到" + str(data_size) + "条数据")
     if data_size == 0:
@@ -137,16 +141,38 @@ def export_data_to_js_file():
         f.write(s)
 
 
+def get_time():
+    now = datetime.datetime.now()
+    return (int(now.strftime("%M")), int(now.strftime("%S")))
+
+
 if __name__ == "__main__":
     stock_list = pro.stock_basic(
         exchange='', list_status='L', fields='ts_code,symbol,name,area,industry,list_date,exchange')
     stock_list = stock_list[stock_list["exchange"].isin(["SSE", "SZSE"])]
 
+    for _, stock in stock_list.iterrows():
+        print(stock["ts_code"])
+        
+
     start_date = get_start_date()
     today = datetime.date.today()
+    count = 1
+    current_min = get_time()
     end_date = today.strftime("%Y%m%d")
     for _, stock in stock_list.iterrows():
         handle_single_stock(stock["ts_code"], start_date, end_date)
+        count += 1
+        current_time = get_time()
+        if current_min[0] == current_time[0]:
+            if count == 200:
+                print("每分钟调取次数已达上限，程序暂停{}秒".format((60 - current_time[1])))
+                time.sleep(60 - current_time[1])
+                current_min = get_time()
+                count = 0
+        else:
+            current_min = current_time
+            count = 0
 
     call_procedure_async_temp_data()
     export_data_to_js_file()
